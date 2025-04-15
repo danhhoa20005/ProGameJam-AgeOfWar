@@ -1,18 +1,33 @@
+/**
+ * Lớp GameRenderer chịu trách nhiệm chính điều phối việc vẽ màn chơi game.
+ * Nó quản lý việc vẽ bản đồ nền và ủy quyền việc vẽ các thực thể (Units, Towers, Bases)
+ * và thanh máu cho các lớp renderer chuyên biệt khác.
+ * Implement Disposable để quản lý tài nguyên renderer.
+ */
 package com.ageofwar.views;
 
-import com.ageofwar.models.*;
+import com.ageofwar.AgeOfWarGame;
+import com.ageofwar.models.GameModel;
+// import com.ageofwar.models.Entity; // Không cần trực tiếp nữa
+// import com.ageofwar.models.players.Player; // Không cần trực tiếp nữa
+// import com.ageofwar.models.players.PlayerType; // Không cần trực tiếp nữa
 import com.ageofwar.screens.GameScreen;
+import com.ageofwar.views.renderers.PlayerBaseRenderer; // Import renderer mới
+import com.ageofwar.views.renderers.TowerRenderer; // Import renderer mới
+import com.ageofwar.views.renderers.UnitRenderer; // Import renderer mới
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.graphics.Color;
 import com.badlogic.gdx.graphics.OrthographicCamera;
-import com.badlogic.gdx.graphics.g2d.BitmapFont;
+import com.badlogic.gdx.graphics.g2d.BitmapFont; // Vẫn cần nếu vẽ chữ
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.graphics.glutils.ShapeRenderer;
 import com.badlogic.gdx.graphics.glutils.ShapeRenderer.ShapeType;
-import com.badlogic.gdx.math.Rectangle;
-import com.badlogic.gdx.utils.Array;
+import com.badlogic.gdx.maps.tiled.TiledMap;
+import com.badlogic.gdx.maps.tiled.renderers.OrthogonalTiledMapRenderer;
+// import com.badlogic.gdx.math.Rectangle; // Không cần trực tiếp nữa
+// import com.badlogic.gdx.utils.Array; // Không cần trực tiếp nữa
 import com.badlogic.gdx.utils.Disposable;
-import com.ageofwar.configs.GameConfig;
+// import com.ageofwar.configs.GameConfig; // Không cần trực tiếp nữa
 
 public class GameRenderer implements Disposable {
 
@@ -21,128 +36,86 @@ public class GameRenderer implements Disposable {
     private final BitmapFont font;
     private final GameModel model;
     private final OrthographicCamera camera;
+    private final OrthogonalTiledMapRenderer mapRenderer;
+    private final AgeOfWarGame game;
 
-    // Colors for placeholders
-    private final Color playerColor = Color.BLUE;
-    private final Color aiColor = Color.RED;
-    private final Color playerTowerColor = Color.CYAN;
-    private final Color aiTowerColor = Color.ORANGE;
-    private final Color healthBarBgColor = Color.DARK_GRAY;
-    private final Color healthBarFgColor = Color.GREEN;
-    private final Color groundColor = Color.BROWN;
-    private final Color baseColorPlayer = Color.NAVY;
-    private final Color baseColorAI = Color.MAROON;
+    // Các renderer chuyên biệt
+    private final UnitRenderer unitRenderer;
+    private final TowerRenderer towerRenderer;
+    private final PlayerBaseRenderer baseRenderer;
 
-    public GameRenderer(SpriteBatch batch, ShapeRenderer shapeRenderer, BitmapFont font, GameModel model, OrthographicCamera camera) {
+    public GameRenderer(AgeOfWarGame game, SpriteBatch batch, ShapeRenderer shapeRenderer, BitmapFont font, GameModel model, OrthographicCamera camera) {
+        this.game = game;
         this.batch = batch;
         this.shapeRenderer = shapeRenderer;
         this.font = font;
         this.model = model;
         this.camera = camera;
+
+        // Khởi tạo Map Renderer
+        TiledMap loadedMap = game.assets.gameMap;
+        if (loadedMap == null) {
+            Gdx.app.error("GameRenderer", "Bản đồ game là null!");
+            this.mapRenderer = null;
+        } else {
+            this.mapRenderer = new OrthogonalTiledMapRenderer(loadedMap, batch);
+        }
+
+        // *** KHỞI TẠO CÁC RENDERER CON ***
+        this.unitRenderer = new UnitRenderer(shapeRenderer, batch);
+        this.towerRenderer = new TowerRenderer(shapeRenderer, batch);
+        this.baseRenderer = new PlayerBaseRenderer(shapeRenderer, batch); // Đổi tên lớp BaseRenderer cũ
     }
 
+    /**
+     * Thực hiện vẽ toàn bộ màn chơi game cho một khung hình.
+     * @param delta Thời gian trôi qua từ khung hình trước.
+     */
     public void render(float delta) {
-        // Use ShapeRenderer for placeholders
+        // 1. Vẽ Map
+        if (mapRenderer != null) {
+            mapRenderer.setView(camera);
+            mapRenderer.render();
+        } else {
+            // Vẽ nền thay thế nếu lỗi map
+            shapeRenderer.setProjectionMatrix(camera.combined);
+            shapeRenderer.begin(ShapeType.Filled);
+            shapeRenderer.setColor(Color.BLACK);
+            shapeRenderer.rect(0,0, GameScreen.WORLD_WIDTH, GameScreen.WORLD_HEIGHT);
+            shapeRenderer.end();
+        }
+
+        // 2. Vẽ Thực thể Game (ủy quyền cho các renderer con)
+        // Cần quản lý begin/end cho ShapeRenderer và SpriteBatch ở đây
         shapeRenderer.setProjectionMatrix(camera.combined);
         shapeRenderer.begin(ShapeType.Filled);
 
-        // Draw Ground
-        shapeRenderer.setColor(groundColor);
-        shapeRenderer.rect(0, 0, GameScreen.WORLD_WIDTH, GameConfig.GROUND_Y); // Use GameScreen constant
+        // Gọi các renderer con để vẽ phần của chúng (bao gồm cả thanh máu)
+        baseRenderer.render(model.getPlayer(), model.getAiPlayer());
+        towerRenderer.render(model.getWorld());
+        unitRenderer.render(model.getWorld());
 
-        // Draw Bases (simple rectangles for now)
-        drawBasePlaceholder(model.getPlayer());
-        drawBasePlaceholder(model.getAiPlayer());
+        shapeRenderer.end(); // Kết thúc ShapeRenderer
 
-        // Draw Towers (Placeholders)
-        drawEntityPlaceholders(model.getWorld().getPlayerTowers(), playerTowerColor);
-        drawEntityPlaceholders(model.getWorld().getAiTowers(), aiTowerColor);
-
-        // Draw Units (Placeholders)
-        drawEntityPlaceholders(model.getWorld().getPlayerUnits(), playerColor);
-        drawEntityPlaceholders(model.getWorld().getAiUnits(), aiColor);
-
-
-        shapeRenderer.end();
-
-        // --- Render Health Bars --- (Can also be done with ShapeRenderer)
-        shapeRenderer.begin(ShapeType.Filled);
-        drawHealthBars(model.getWorld().getPlayerTowers());
-        drawHealthBars(model.getWorld().getAiTowers());
-        drawHealthBars(model.getWorld().getPlayerUnits());
-        drawHealthBars(model.getWorld().getAiUnits());
-        drawBaseHealthBar(model.getPlayer());
-        drawBaseHealthBar(model.getAiPlayer());
-        shapeRenderer.end();
-
-
-        // Use SpriteBatch for text or actual sprites later
+        // 3. Vẽ bằng SpriteBatch (nếu cần)
         // batch.setProjectionMatrix(camera.combined);
         // batch.begin();
-        // font.draw(batch, "Game Screen", 100, 100);
+        // // Gọi các hàm vẽ sprite từ các renderer con nếu chúng có
+        // // unitRenderer.renderSprites(model.getWorld());
+        // // towerRenderer.renderSprites(model.getWorld());
+        // // baseRenderer.renderSprites(model.getPlayer(), model.getAiPlayer());
         // batch.end();
     }
 
-    // Generic method to draw placeholders for any entity list
-    private <T extends Entity> void drawEntityPlaceholders(Array<T> entities, Color color) {
-        shapeRenderer.setColor(color);
-        for (T entity : entities) {
-            if (entity.isAlive()) {
-                Rectangle bounds = entity.getBounds();
-                // Offset Y slightly so base is on the ground line
-                shapeRenderer.rect(bounds.x, bounds.y, bounds.width, bounds.height);
-            }
-        }
-    }
-
-    // Generic method to draw health bars
-    private <T extends Entity> void drawHealthBars(Array<T> entities) {
-        for (T entity : entities) {
-            if (entity.isAlive()) {
-                drawHealthBar(entity.getBounds().x, entity.getBounds().y + entity.getBounds().height + 5, // Position above entity
-                    entity.getBounds().width, 5, // Size of health bar
-                    entity.getHealth(), entity.getMaxHealth());
-            }
-        }
-    }
-
-    private void drawBasePlaceholder(Player player) {
-        Color baseColor = (player.getType() == PlayerType.PLAYER) ? baseColorPlayer : baseColorAI;
-        shapeRenderer.setColor(baseColor);
-        // Draw a simple rectangle for the base
-        float baseWidth = 100; // Example width
-        float baseHeight = 150; // Example height
-        float baseX = (player.getType() == PlayerType.PLAYER) ? GameConfig.PLAYER_BASE_X - baseWidth / 2 : GameConfig.AI_BASE_X - baseWidth / 2;
-        shapeRenderer.rect(baseX, GameConfig.GROUND_Y, baseWidth, baseHeight);
-    }
-
-    private void drawBaseHealthBar(Player player) {
-        float baseWidth = 100; // Must match placeholder width
-        float baseHeight = 150; // Must match placeholder height
-        float baseX = (player.getType() == PlayerType.PLAYER) ? GameConfig.PLAYER_BASE_X - baseWidth / 2 : GameConfig.AI_BASE_X - baseWidth / 2;
-        drawHealthBar(baseX, GameConfig.GROUND_Y + baseHeight + 5, baseWidth, 10, player.getBaseHealth(), player.getMaxBaseHealth());
-    }
-
-
-    // Helper to draw a single health bar
-    private void drawHealthBar(float x, float y, float width, float height, int currentHealth, int maxHealth) {
-        if (maxHealth <= 0) return; // Avoid division by zero
-        float healthPercentage = (float) currentHealth / maxHealth;
-        healthPercentage = Math.max(0f, Math.min(1f, healthPercentage)); // Clamp between 0 and 1
-
-        // Draw background
-        shapeRenderer.setColor(healthBarBgColor);
-        shapeRenderer.rect(x, y, width, height);
-
-        // Draw foreground
-        shapeRenderer.setColor(healthBarFgColor);
-        shapeRenderer.rect(x, y, width * healthPercentage, height);
-    }
-
-
+    /**
+     * Giải phóng các tài nguyên mà GameRenderer sở hữu trực tiếp.
+     */
     @Override
     public void dispose() {
-        // Dispose resources created solely by the renderer if any
-        // Shared resources (batch, shapeRenderer, font) are disposed in AgeOfWarGame
+        if (mapRenderer != null) {
+            mapRenderer.dispose();
+        }
+        // Các renderer con không tự quản lý tài nguyên Disposable chính (batch, shapeRenderer)
+        // nên không cần gọi dispose() cho chúng.
     }
 }

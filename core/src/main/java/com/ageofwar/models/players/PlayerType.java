@@ -1,4 +1,4 @@
-package com.ageofwar.models;
+package com.ageofwar.models.players;
 
 public enum PlayerType {
     PLAYER,

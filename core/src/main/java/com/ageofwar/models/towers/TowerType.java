@@ -1,4 +1,4 @@
-package com.ageofwar.models;
+package com.ageofwar.models.towers;
 
 // Represents the 15 tower types across 5 eras (3 per era)
 public enum TowerType {

@@ -1,8 +1,8 @@
-package com.ageofwar.models;
+package com.ageofwar.models.units;
 
+import com.ageofwar.models.Entity;
+import com.ageofwar.models.players.PlayerType;
 import com.badlogic.gdx.Gdx;
-import com.badlogic.gdx.math.Vector2;
-import com.ageofwar.configs.GameConfig;
 import com.ageofwar.configs.UnitConfig; // To get dimensions
 
 public class Unit extends Entity {

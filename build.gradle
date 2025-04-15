@@ -42,7 +42,7 @@ project(':lwjgl3') { // Specific configuration for lwjgl3
   apply plugin: 'java-library' // Still a java library
   apply plugin: 'application' // It's also the application entry point
   sourceCompatibility = 11
-  mainClassName = 'com.team3hailong.ageofwar.lwjgl3.Lwjgl3Launcher' // Set main class
+  mainClassName = 'com.ageofwar.lwjgl3.Lwjgl3Launcher' // Set main class
   compileJava {
     options.encoding = 'UTF-8'
   }
@@ -56,7 +56,7 @@ project(':lwjgl3') { // Specific configuration for lwjgl3
   }
 
   run {
-    workingDir = rootProject.file('assets').path // Set working directory to core/assets
+    workingDir = new File("${project.rootDir}/assets/")
     ignoreExitValue = true // Useful for development
 
     // JVM arguments for better performance/compatibility
@@ -72,11 +72,14 @@ project(':lwjgl3') { // Specific configuration for lwjgl3
   }
 
   jar {
+    dependsOn project(':core').tasks.jar
     archiveBaseName = "${appName}-lwjgl3" // Naming convention for jar
 
     // Include dependencies in the JAR (fat JAR)
     duplicatesStrategy = DuplicatesStrategy.EXCLUDE // Handle duplicate files
     from { configurations.runtimeClasspath.collect { it.isDirectory() ? it : zipTree(it) } }
+    // *** UPDATED: Include assets in the fat JAR ***
+    from(new File(rootDir, 'assets')) { into '.' } // Copy assets into the root of the JAR
     manifest {
       attributes 'Main-Class': project(':lwjgl3').mainClassName
     }
@@ -119,7 +122,7 @@ project(':core') {
 
 // Define assets directory for easy access
 // This assumes your assets are in core/assets/
-project(':core').ext.assetsDir = new File(project(':core').projectDir, 'assets')
+//project(':core').ext.assetsDir = new File(project(':core').projectDir, 'assets')
 
 // Task to copy assets on build (optional, useful for some deployment scenarios)
 // task copyAssets(type: Copy) {

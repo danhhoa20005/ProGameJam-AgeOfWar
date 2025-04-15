@@ -26,6 +26,7 @@ project(":lwjgl3") {
   // This has to run before nativeCompile, so it runs at the start of an unrelated resource-handling command.
   generateResourcesConfigFile.doFirst {
     def assetsFolder = new File("${project.rootDir}/assets/")
+
     def lwjgl3 = project(':lwjgl3')
     def resFolder = new File("${lwjgl3.projectDir}/src/main/resources/META-INF/native-image/${lwjgl3.ext.appName}")
     resFolder.mkdirs()

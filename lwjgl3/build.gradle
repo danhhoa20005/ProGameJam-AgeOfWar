@@ -1,182 +1,120 @@
+import org.gradle.internal.os.OperatingSystem
 
 buildscript {
   repositories {
+    mavenCentral()
+    google()
     gradlePluginPortal()
+    maven { url 'https://s01.oss.sonatype.org' }
   }
   dependencies {
-    classpath "io.github.fourlastor:construo:1.7.1"
-    if(enableGraalNative == 'true') {
-      classpath "org.graalvm.buildtools.native:org.graalvm.buildtools.native.gradle.plugin:0.9.28"
+    classpath "com.badlogicgames.gdx:gdx-tools:1.12.1" // Use latest stable LibGDX version
+    // Consider adding gdx-liftoff or similar setup tool dependency if needed
+    // classpath "com.github.czyzby:gdx-liftoff-gradle:1.12.1.1" // Example
+  }
+}
+
+allprojects {
+  apply plugin: 'eclipse'
+  apply plugin: 'idea'
+}
+
+configure(subprojects - project(':lwjgl3')) { // Configure all subprojects except lwjgl3
+  apply plugin: 'java-library'
+  sourceCompatibility = 11 // Target Java 11 or higher
+  compileJava {
+    options.encoding = 'UTF-8' // Set encoding for source files
+  }
+}
+
+
+project(':lwjgl3') { // Specific configuration for lwjgl3
+  apply plugin: 'java-library' // Still a java library
+  apply plugin: 'application' // It's also the application entry point
+  sourceCompatibility = 11
+  mainClassName = 'com.ageofwar.lwjgl3.Lwjgl3Launcher' // Set main class
+  compileJava {
+    options.encoding = 'UTF-8'
+  }
+
+  dependencies {
+    implementation project(':core') // Depends on the core project
+    api "com.badlogicgames.gdx:gdx-backend-lwjgl3:$gdxVersion"
+    api "com.badlogicgames.gdx:gdx-platform:$gdxVersion:natives-desktop"
+    // Add other desktop-specific dependencies if needed (e.g., gdx-controllers-desktop)
+    // api "com.badlogicgames.gdx:gdx-box2d-platform:$gdxVersion:natives-desktop" // If using Box2D natives
+  }
+
+  run {
+    // Correctly set working directory to the root project's 'assets' folder
+    workingDir = new File(rootProject.projectDir, 'assets')
+    ignoreExitValue = true // Useful for development
+
+    // JVM arguments for better performance/compatibility
+    if (OperatingSystem.current() == OperatingSystem.MAC_OS) {
+      jvmArgs += "-XstartOnFirstThread"
+    }
+    if (OperatingSystem.current() == OperatingSystem.LINUX) {
+      // May need specific args for Linux Wayland/X11
+    }
+    if (OperatingSystem.current() == OperatingSystem.WINDOWS) {
+      // May need specific args for Windows
     }
   }
-}
-plugins {
-  id "application"
-}
-apply plugin: 'io.github.fourlastor.construo'
 
+  jar {
+    archiveBaseName = "${appName}-lwjgl3" // Naming convention for jar
 
-import io.github.fourlastor.construo.Target
-
-sourceSets.main.resources.srcDirs += [ rootProject.file('assets').path ]
-mainClassName = 'com.ageofwar.lwjgl3.Lwjgl3Launcher'
-application.setMainClass(mainClassName)
-eclipse.project.name = appName + '-lwjgl3'
-java.sourceCompatibility = 8
-java.targetCompatibility = 8
-if (JavaVersion.current().isJava9Compatible()) {
-        compileJava.options.release.set(8)
-}
-
-dependencies {
-  implementation "com.badlogicgames.gdx:gdx-backend-lwjgl3:$gdxVersion"
-  implementation "com.badlogicgames.gdx:gdx-box2d-platform:$gdxVersion:natives-desktop"
-  implementation "com.badlogicgames.gdx:gdx-freetype-platform:$gdxVersion:natives-desktop"
-  implementation "com.badlogicgames.gdx:gdx-platform:$gdxVersion:natives-desktop"
-  implementation project(':core')
-
-  if(enableGraalNative == 'true') {
-    implementation "io.github.berstanio:gdx-svmhelper-backend-lwjgl3:$graalHelperVersion"
-      implementation "io.github.berstanio:gdx-svmhelper-extension-box2d:$graalHelperVersion"
-      implementation "io.github.berstanio:gdx-svmhelper-extension-freetype:$graalHelperVersion"
-
-    }
-}
-
-def os = System.properties['os.name'].toLowerCase()
-
-run {
-  workingDir = rootProject.file('assets').path
-// You can uncomment the next line if your IDE claims a build failure even when the app closed properly.
-  //setIgnoreExitValue(true)
-
-  if (os.contains('mac')) jvmArgs += "-XstartOnFirstThread"
-}
-
-jar {
-// sets the name of the .jar file this produces to the name of the game or app, with the version after.
-  archiveFileName.set("${appName}-${projectVersion}.jar")
-// the duplicatesStrategy matters starting in Gradle 7.0; this setting works.
-  duplicatesStrategy(DuplicatesStrategy.EXCLUDE)
-  dependsOn configurations.runtimeClasspath
-  from { configurations.runtimeClasspath.collect { it.isDirectory() ? it : zipTree(it) } }
-// these "exclude" lines remove some unnecessary duplicate files in the output JAR.
-  exclude('META-INF/INDEX.LIST', 'META-INF/*.SF', 'META-INF/*.DSA', 'META-INF/*.RSA')
-  dependencies {
-    exclude('META-INF/INDEX.LIST', 'META-INF/maven/**')
-  }
-// setting the manifest makes the JAR runnable.
-  manifest {
-    attributes 'Main-Class': project.mainClassName
-  }
-// this last step may help on some OSes that need extra instruction to make runnable JARs.
-  doLast {
-    file(archiveFile).setExecutable(true, false)
-  }
-}
-
-// Builds a JAR that only includes the files needed to run on macOS, not Windows or Linux.
-// The file size for a Mac-only JAR is about 7MB smaller than a cross-platform JAR.
-tasks.register("jarMac") {
-  dependsOn("jar")
-  group("build")
-  jar.archiveFileName.set("${appName}-${projectVersion}-mac.jar")
-  jar.exclude("windows/x86/**", "windows/x64/**", "linux/arm32/**", "linux/arm64/**", "linux/x64/**", "**/*.dll", "**/*.so",
-    'META-INF/INDEX.LIST', 'META-INF/*.SF', 'META-INF/*.DSA', 'META-INF/*.RSA')
-  dependencies {
-    jar.exclude("windows/x86/**", "windows/x64/**", "linux/arm32/**", "linux/arm64/**", "linux/x64/**",
-      'META-INF/INDEX.LIST', 'META-INF/maven/**')
-  }
-}
-
-// Builds a JAR that only includes the files needed to run on Linux, not Windows or macOS.
-// The file size for a Linux-only JAR is about 5MB smaller than a cross-platform JAR.
-tasks.register("jarLinux") {
-  dependsOn("jar")
-  group("build")
-  jar.archiveFileName.set("${appName}-${projectVersion}-linux.jar")
-  jar.exclude("windows/x86/**", "windows/x64/**", "macos/arm64/**", "macos/x64/**", "**/*.dll", "**/*.dylib",
-    'META-INF/INDEX.LIST', 'META-INF/*.SF', 'META-INF/*.DSA', 'META-INF/*.RSA')
-  dependencies {
-    jar.exclude("windows/x86/**", "windows/x64/**", "macos/arm64/**", "macos/x64/**",
-      'META-INF/INDEX.LIST', 'META-INF/maven/**')
-  }
-}
-
-// Builds a JAR that only includes the files needed to run on Windows, not Linux or macOS.
-// The file size for a Windows-only JAR is about 6MB smaller than a cross-platform JAR.
-tasks.register("jarWin") {
-  dependsOn("jar")
-  group("build")
-  jar.archiveFileName.set("${appName}-${projectVersion}-win.jar")
-  jar.exclude("macos/arm64/**", "macos/x64/**", "linux/arm32/**", "linux/arm64/**", "linux/x64/**", "**/*.dylib", "**/*.so",
-    'META-INF/INDEX.LIST', 'META-INF/*.SF', 'META-INF/*.DSA', 'META-INF/*.RSA')
-  dependencies {
-    jar.exclude("macos/arm64/**", "macos/x64/**", "linux/arm32/**", "linux/arm64/**", "linux/x64/**",
-      'META-INF/INDEX.LIST', 'META-INF/maven/**')
-  }
-}
-
-construo {
-    // name of the executable
-    name.set(appName)
-    // human-readable name, used for example in the `.app` name for macOS
-    humanName.set(appName)
-    // Optional, defaults to project version property
-    version.set("$projectVersion")
-
-    targets.configure {
-      create("linuxX64", Target.Linux) {
-        architecture.set(Target.Architecture.X86_64)
-        jdkUrl.set("https://github.com/adoptium/temurin17-binaries/releases/download/jdk-17.0.12%2B7/OpenJDK17U-jdk_x64_linux_hotspot_17.0.12_7.tar.gz")
-      }
-      create("macM1", Target.MacOs) {
-        architecture.set(Target.Architecture.AARCH64)
-        jdkUrl.set("https://github.com/adoptium/temurin17-binaries/releases/download/jdk-17.0.12%2B7/OpenJDK17U-jdk_aarch64_mac_hotspot_17.0.12_7.tar.gz")
-        // macOS needs an identifier
-        identifier.set("com.ageofwar." + appName)
-        // Optional: icon for macOS
-        macIcon.set(project.file("icons/logo.icns"))
-      }
-      create("macX64", Target.MacOs) {
-        architecture.set(Target.Architecture.X86_64)
-        jdkUrl.set("https://github.com/adoptium/temurin17-binaries/releases/download/jdk-17.0.12%2B7/OpenJDK17U-jdk_x64_mac_hotspot_17.0.12_7.tar.gz")
-        // macOS needs an identifier
-        identifier.set("com.ageofwar." + appName)
-        // Optional: icon for macOS
-        macIcon.set(project.file("icons/logo.icns"))
-      }
-      create("winX64", Target.Windows) {
-        architecture.set(Target.Architecture.X86_64)
-        jdkUrl.set("https://github.com/adoptium/temurin17-binaries/releases/download/jdk-17.0.12%2B7/OpenJDK17U-jdk_x64_windows_hotspot_17.0.12_7.zip")
-        // Uncomment the next line to show a console when the game runs, to print messages.
-        //useConsole.set(true)
-      }
-    }
-}
-
-// Equivalent to the jar task; here for compatibility with gdx-setup.
-tasks.register('dist') {
-  dependsOn 'jar'
-}
-
-distributions {
-  main {
-    contents {
-      into('libs') {
-        project.configurations.runtimeClasspath.files.findAll { file ->
-          file.getName() != project.tasks.jar.outputs.files.singleFile.name
-        }.each { file ->
-          exclude file.name
-        }
-      }
+    // Include dependencies in the JAR (fat JAR)
+    duplicatesStrategy = DuplicatesStrategy.EXCLUDE // Handle duplicate files
+    from { configurations.runtimeClasspath.collect { it.isDirectory() ? it : zipTree(it) } }
+    manifest {
+      attributes 'Main-Class': project(':lwjgl3').mainClassName
     }
   }
 }
 
-startScripts.dependsOn(':lwjgl3:jar')
-startScripts.classpath = project.tasks.jar.outputs.files
 
-if(enableGraalNative == 'true') {
-  apply from: file("nativeimage.gradle")
+project(':core') {
+  apply plugin: 'java-library'
+  sourceCompatibility = 11
+  compileJava {
+    options.encoding = 'UTF-8'
+  }
+
+
+  dependencies {
+    api "com.badlogicgames.gdx:gdx:$gdxVersion"
+    // Add other core dependencies here (e.g., gdx-ai, gdx-box2d)
+    // api "com.badlogicgames.gdx:gdx-box2d:$gdxVersion" // If using Box2D
+    // api "com.badlogicgames.gdx:gdx-controllers:$gdxVersion" // If using controllers
+    // api "com.badlogicgames.gdx:gdx-ai:$aiVersion" // If using gdx-ai
+  }
 }
+
+// Define versions in gradle.properties or here
+// ext { // Example using ext block
+//     gdxVersion = '1.12.1'
+//     aiVersion = '1.8.2' // Example if using gdx-ai
+// }
+
+// Or directly reference from gradle.properties (preferred)
+// Ensure gdxVersion is defined in your gradle.properties file
+// Example gradle.properties content:
+// gdxVersion=1.12.1
+// appName=AgeOfWar
+
+// REMOVED THE INCORRECT assetsDir definition from here
+
+// Task to copy assets on build (optional, useful for some deployment scenarios)
+// If assets are at the root, this task might need adjustment if used
+// task copyAssets(type: Copy) {
+// 	from new File(rootProject.projectDir, 'assets') // Copy from root assets
+// 	into project(':lwjgl3').buildDir.path + '/classes/java/main'
+// }
+// project(':lwjgl3').classes.dependsOn copyAssets
+
+
+// Define appName from gradle.properties or here
+// ext.appName = 'AgeOfWar' // Example
+// Ensure appName is defined in gradle.properties

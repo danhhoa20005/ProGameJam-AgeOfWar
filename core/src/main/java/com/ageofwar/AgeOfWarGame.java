@@ -1,34 +1,52 @@
 package com.ageofwar;
 
-import com.badlogic.gdx.ApplicationAdapter;
+import com.badlogic.gdx.Game;
 import com.badlogic.gdx.Gdx;
-import com.badlogic.gdx.graphics.GL20;
-import com.badlogic.gdx.graphics.Texture;
+import com.badlogic.gdx.graphics.g2d.BitmapFont;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
-import com.badlogic.gdx.utils.ScreenUtils;
+import com.badlogic.gdx.graphics.glutils.ShapeRenderer;
+import com.ageofwar.screens.MainMenuScreen;
+import com.ageofwar.utils.Assets;
 
-/** {@link com.badlogic.gdx.ApplicationListener} implementation shared by all platforms. */
-public class AgeOfWarGame extends ApplicationAdapter {
-    private SpriteBatch batch;
-    private Texture image;
+public class AgeOfWarGame extends Game {
+    // Shared resources (can be managed by an AssetManager class as well)
+    public SpriteBatch batch;
+    public ShapeRenderer shapeRenderer; // For placeholders
+    public BitmapFont font;
+    public Assets assets;
 
     @Override
-    public void create() {
+    public void create () {
         batch = new SpriteBatch();
-        image = new Texture("libgdx.png");
+        shapeRenderer = new ShapeRenderer();
+        font = new BitmapFont(); // Use default Arial font for simplicity
+        assets = new Assets();
+
+        // Load essential assets needed globally or for the first screen
+        assets.load();
+        assets.manager.finishLoading(); // Block until loaded for simplicity here
+
+        Gdx.app.log("AgeOfWarGame", "Game created and assets loaded.");
+        this.setScreen(new MainMenuScreen(this));
     }
 
     @Override
-    public void render() {
-        ScreenUtils.clear(0.15f, 0.15f, 0.2f, 1f);
-        batch.begin();
-        batch.draw(image, 140, 210);
-        batch.end();
+    public void render () {
+        super.render(); // Important! Delegates render to the current screen
     }
 
     @Override
-    public void dispose() {
+    public void dispose () {
+        Gdx.app.log("AgeOfWarGame", "Game disposing.");
+        // Dispose shared resources
         batch.dispose();
-        image.dispose();
+        shapeRenderer.dispose();
+        font.dispose();
+        assets.dispose(); // Dispose asset manager
+
+        // Dispose the current screen if it exists
+        if (screen != null) {
+            screen.dispose();
+        }
     }
 }

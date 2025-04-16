@@ -1,16 +1,18 @@
+import org.gradle.internal.os.OperatingSystem
+
 buildscript {
   repositories {
     mavenCentral()
-    maven { url 'https://s01.oss.sonatype.org' }
-    gradlePluginPortal()
-    mavenLocal()
     google()
-    maven { url 'https://oss.sonatype.org/content/repositories/snapshots/' }
-    maven { url 'https://s01.oss.sonatype.org/content/repositories/snapshots/' }
+    gradlePluginPortal()
+    maven { url 'https://s01.oss.sonatype.org' }
+    // Add JitPack repository needed for some community libraries if you add them later
+    // maven { url 'https://jitpack.io' }
   }
   dependencies {
-
-
+    classpath "com.badlogicgames.gdx:gdx-tools:1.12.1" // Use latest stable LibGDX version
+    // Consider adding gdx-liftoff or similar setup tool dependency if needed
+    // classpath "com.github.czyzby:gdx-liftoff-gradle:1.12.1.1" // Example
   }
 }
 
@@ -18,56 +20,118 @@ allprojects {
   apply plugin: 'eclipse'
   apply plugin: 'idea'
 
-  // This allows you to "Build and run using IntelliJ IDEA", an option in IDEA's Settings.
-  idea {
-    module {
-      outputDir file('build/classes/java/main')
-      testOutputDir file('build/classes/java/test')
-    }
-  }
-}
-
-configure(subprojects) {
-  apply plugin: 'java-library'
-  sourceCompatibility = 8
-
-  // From https://lyze.dev/2021/04/29/libGDX-Internal-Assets-List/
-  // The article can be helpful when using assets.txt in your project.
-  tasks.register('generateAssetList') {
-    inputs.dir("${project.rootDir}/assets/")
-    // projectFolder/assets
-    File assetsFolder = new File("${project.rootDir}/assets/")
-    // projectFolder/assets/assets.txt
-    File assetsFile = new File(assetsFolder, "assets.txt")
-    // delete that file in case we've already created it
-    assetsFile.delete()
-
-    // iterate through all files inside that folder
-    // convert it to a relative path
-    // and append it to the file assets.txt
-    fileTree(assetsFolder).collect { assetsFolder.relativePath(it) }.sort().each {
-      assetsFile.append(it + "\n")
-    }
-  }
-  processResources.dependsOn 'generateAssetList'
-
-  compileJava {
-    options.incremental = true
-  }
-}
-
-subprojects {
-  version = "$projectVersion"
-  ext.appName = 'AgeOfWar'
-  repositories {
+  repositories { // Add repositories here to apply to all projects
     mavenCentral()
-    maven { url 'https://s01.oss.sonatype.org' }
-    // You may want to remove the following line if you have errors downloading dependencies.
-    mavenLocal()
-    maven { url 'https://oss.sonatype.org/content/repositories/snapshots/' }
-    maven { url 'https://s01.oss.sonatype.org/content/repositories/snapshots/' }
-    maven { url 'https://jitpack.io' }
+    google()
+    maven { url 'https://s01.oss.sonatype.org/content/repositories/snapshots' } // For snapshot versions if needed
+    // maven { url 'https://oss.sonatype.org/content/repositories/snapshots' } // Alternative snapshot repo
+    // maven { url 'https://jitpack.io' } // Add JitPack if needed later
   }
 }
 
-eclipse.project.name = 'AgeOfWar' + '-parent'
+configure(subprojects - project(':lwjgl3')) { // Configure all subprojects except lwjgl3
+  apply plugin: 'java-library'
+  sourceCompatibility = 11 // Target Java 11 or higher
+  compileJava {
+    options.encoding = 'UTF-8' // Set encoding for source files
+  }
+}
+
+
+project(':lwjgl3') { // Specific configuration for lwjgl3
+  apply plugin: 'java-library' // Still a java library
+  apply plugin: 'application' // It's also the application entry point
+  sourceCompatibility = 11
+  mainClassName = 'com.ageofwar.lwjgl3.Lwjgl3Launcher' // Set main class
+  compileJava {
+    options.encoding = 'UTF-8'
+  }
+
+  dependencies {
+    implementation project(':core') // Depends on the core project
+    api "com.badlogicgames.gdx:gdx-backend-lwjgl3:$gdxVersion"
+    api "com.badlogicgames.gdx:gdx-platform:$gdxVersion:natives-desktop"
+    // Add other desktop-specific dependencies if needed (e.g., gdx-controllers-desktop)
+    // api "com.badlogicgames.gdx:gdx-box2d-platform:$gdxVersion:natives-desktop" // If using Box2D natives
+  }
+
+  run {
+    workingDir = new File("${project.rootDir}/assets/")
+    ignoreExitValue = true // Useful for development
+
+    // JVM arguments for better performance/compatibility
+    if (OperatingSystem.current() == OperatingSystem.MAC_OS) {
+      jvmArgs += "-XstartOnFirstThread"
+    }
+    if (OperatingSystem.current() == OperatingSystem.LINUX) {
+      // May need specific args for Linux Wayland/X11
+    }
+    if (OperatingSystem.current() == OperatingSystem.WINDOWS) {
+      // May need specific args for Windows
+    }
+  }
+
+  jar {
+    dependsOn project(':core').tasks.jar
+    archiveBaseName = "${appName}-lwjgl3" // Naming convention for jar
+
+    // Include dependencies in the JAR (fat JAR)
+    duplicatesStrategy = DuplicatesStrategy.EXCLUDE // Handle duplicate files
+    from { configurations.runtimeClasspath.collect { it.isDirectory() ? it : zipTree(it) } }
+    // *** UPDATED: Include assets in the fat JAR ***
+    from(new File(rootDir, 'assets')) { into '.' } // Copy assets into the root of the JAR
+    manifest {
+      attributes 'Main-Class': project(':lwjgl3').mainClassName
+    }
+  }
+}
+
+
+project(':core') {
+  apply plugin: 'java-library'
+  sourceCompatibility = 11
+  compileJava {
+    options.encoding = 'UTF-8'
+  }
+
+
+  dependencies {
+    api "com.badlogicgames.gdx:gdx:$gdxVersion"
+    // Add other core dependencies here (e.g., gdx-ai, gdx-box2d)
+    // api "com.badlogicgames.gdx:gdx-box2d:$gdxVersion" // If using Box2D
+    // api "com.badlogicgames.gdx:gdx-controllers:$gdxVersion" // If using controllers
+    // api "com.badlogicgames.gdx:gdx-ai:$aiVersion" // If using gdx-ai
+
+    // REMOVED the following lines as they are not needed and caused the error:
+    //api "com.github.raeleus.TenPatch:tenpatch:6.1.0"
+    //api "space.earlygrey:shapedrawer:2.6.0"
+  }
+}
+
+// Define versions in gradle.properties or here
+// ext { // Example using ext block
+//     gdxVersion = '1.12.1'
+//     aiVersion = '1.8.2' // Example if using gdx-ai
+// }
+
+// Or directly reference from gradle.properties (preferred)
+// Ensure gdxVersion is defined in your gradle.properties file
+// Example gradle.properties content:
+// gdxVersion=1.12.1
+// appName=AgeOfWar
+
+// Define assets directory for easy access
+// This assumes your assets are in core/assets/
+//project(':core').ext.assetsDir = new File(project(':core').projectDir, 'assets')
+
+// Task to copy assets on build (optional, useful for some deployment scenarios)
+// task copyAssets(type: Copy) {
+// 	from project(':core').assetsDir
+// 	into project(':lwjgl3').buildDir.path + '/classes/java/main'
+// }
+// project(':lwjgl3').classes.dependsOn copyAssets
+
+
+// Define appName from gradle.properties or here
+// ext.appName = 'AgeOfWar' // Example
+// Ensure appName is defined in gradle.properties

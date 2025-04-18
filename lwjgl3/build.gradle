@@ -21,7 +21,7 @@ allprojects {
 
 configure(subprojects - project(':lwjgl3')) { // Configure all subprojects except lwjgl3
   apply plugin: 'java-library'
-  sourceCompatibility = 11 // Target Java 11 or higher
+  sourceCompatibility = 1.8 // Target Java 11 or higher
   compileJava {
     options.encoding = 'UTF-8' // Set encoding for source files
   }
@@ -31,7 +31,7 @@ configure(subprojects - project(':lwjgl3')) { // Configure all subprojects excep
 project(':lwjgl3') { // Specific configuration for lwjgl3
   apply plugin: 'java-library' // Still a java library
   apply plugin: 'application' // It's also the application entry point
-  sourceCompatibility = 11
+  sourceCompatibility = 1.8
   mainClassName = 'com.ageofwar.lwjgl3.Lwjgl3Launcher' // Set main class
   compileJava {
     options.encoding = 'UTF-8'
@@ -77,7 +77,7 @@ project(':lwjgl3') { // Specific configuration for lwjgl3
 
 project(':core') {
   apply plugin: 'java-library'
-  sourceCompatibility = 11
+  sourceCompatibility = 1.8
   compileJava {
     options.encoding = 'UTF-8'
   }
@@ -85,6 +85,7 @@ project(':core') {
 
   dependencies {
     api "com.badlogicgames.gdx:gdx:$gdxVersion"
+    api "com.badlogicgames.gdx:gdx-tools:$gdxVersion"
     // Add other core dependencies here (e.g., gdx-ai, gdx-box2d)
     // api "com.badlogicgames.gdx:gdx-box2d:$gdxVersion" // If using Box2D
     // api "com.badlogicgames.gdx:gdx-controllers:$gdxVersion" // If using controllers

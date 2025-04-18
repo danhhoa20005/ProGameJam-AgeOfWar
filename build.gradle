@@ -10,7 +10,7 @@ buildscript {
     // maven { url 'https://jitpack.io' }
   }
   dependencies {
-    classpath "com.badlogicgames.gdx:gdx-tools:1.12.1" // Use latest stable LibGDX version
+    classpath "com.badlogicgames.gdx:gdx-tools:$gdxVersion"
     // Consider adding gdx-liftoff or similar setup tool dependency if needed
     // classpath "com.github.czyzby:gdx-liftoff-gradle:1.12.1.1" // Example
   }
@@ -25,13 +25,13 @@ allprojects {
     google()
     maven { url 'https://s01.oss.sonatype.org/content/repositories/snapshots' } // For snapshot versions if needed
     // maven { url 'https://oss.sonatype.org/content/repositories/snapshots' } // Alternative snapshot repo
-    // maven { url 'https://jitpack.io' } // Add JitPack if needed later
+    maven { url 'https://jitpack.io' }
   }
 }
 
 configure(subprojects - project(':lwjgl3')) { // Configure all subprojects except lwjgl3
   apply plugin: 'java-library'
-  sourceCompatibility = 11 // Target Java 11 or higher
+  sourceCompatibility = 1.8 // Target Java 11 or higher
   compileJava {
     options.encoding = 'UTF-8' // Set encoding for source files
   }
@@ -39,9 +39,9 @@ configure(subprojects - project(':lwjgl3')) { // Configure all subprojects excep
 
 
 project(':lwjgl3') { // Specific configuration for lwjgl3
-  apply plugin: 'java-library' // Still a java library
-  apply plugin: 'application' // It's also the application entry point
-  sourceCompatibility = 11
+  apply plugin: 'java-library'
+  apply plugin: 'application'
+  sourceCompatibility = 1.8
   mainClassName = 'com.ageofwar.lwjgl3.Lwjgl3Launcher' // Set main class
   compileJava {
     options.encoding = 'UTF-8'
@@ -78,7 +78,7 @@ project(':lwjgl3') { // Specific configuration for lwjgl3
     // Include dependencies in the JAR (fat JAR)
     duplicatesStrategy = DuplicatesStrategy.EXCLUDE // Handle duplicate files
     from { configurations.runtimeClasspath.collect { it.isDirectory() ? it : zipTree(it) } }
-    // *** UPDATED: Include assets in the fat JAR ***
+
     from(new File(rootDir, 'assets')) { into '.' } // Copy assets into the root of the JAR
     manifest {
       attributes 'Main-Class': project(':lwjgl3').mainClassName
@@ -89,13 +89,14 @@ project(':lwjgl3') { // Specific configuration for lwjgl3
 
 project(':core') {
   apply plugin: 'java-library'
-  sourceCompatibility = 11
+  sourceCompatibility = 1.8
   compileJava {
     options.encoding = 'UTF-8'
   }
 
 
   dependencies {
+    api "com.badlogicgames.gdx:gdx-tools:$gdxVersion"
     api "com.badlogicgames.gdx:gdx:$gdxVersion"
     // Add other core dependencies here (e.g., gdx-ai, gdx-box2d)
     // api "com.badlogicgames.gdx:gdx-box2d:$gdxVersion" // If using Box2D

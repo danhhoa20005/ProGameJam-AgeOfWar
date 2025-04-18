@@ -13,7 +13,7 @@ import com.badlogic.gdx.scenes.scene2d.ui.TextButton;
 import com.badlogic.gdx.scenes.scene2d.utils.ChangeListener;
 import com.badlogic.gdx.utils.viewport.ScreenViewport;
 import com.ageofwar.AgeOfWarGame;
-import com.ageofwar.models.PlayerType; // Enum to indicate winner
+import com.ageofwar.models.players.PlayerType; // Enum to indicate winner
 
 public class EndGameScreen extends ScreenAdapter {
 

@@ -1,26 +1,18 @@
 package com.ageofwar.screens;
 
+import com.ageofwar.configs.GameConfig;
+import com.ageofwar.controllers.InputHandler;
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.InputMultiplexer;
 import com.badlogic.gdx.ScreenAdapter;
-import com.badlogic.gdx.graphics.Color;
 import com.badlogic.gdx.graphics.GL20;
 import com.badlogic.gdx.graphics.OrthographicCamera;
-import com.badlogic.gdx.graphics.g2d.BitmapFont;
-import com.badlogic.gdx.graphics.g2d.SpriteBatch;
-import com.badlogic.gdx.graphics.glutils.ShapeRenderer;
-import com.badlogic.gdx.math.Vector2;
-import com.badlogic.gdx.scenes.scene2d.Stage;
-import com.badlogic.gdx.scenes.scene2d.ui.Label;
-import com.badlogic.gdx.scenes.scene2d.ui.Skin;
-import com.badlogic.gdx.scenes.scene2d.ui.Table;
-import com.badlogic.gdx.scenes.scene2d.ui.TextButton;
+import com.badlogic.gdx.maps.MapProperties;
 import com.badlogic.gdx.utils.viewport.FitViewport;
 import com.badlogic.gdx.utils.viewport.Viewport;
 import com.ageofwar.AgeOfWarGame;
 import com.ageofwar.controllers.GameController;
 import com.ageofwar.models.GameModel;
-import com.ageofwar.models.PlayerType; // Import PlayerType
 import com.ageofwar.views.GameRenderer;
 import com.ageofwar.views.Hud; // Separate class for HUD
 
@@ -32,13 +24,14 @@ public class GameScreen extends ScreenAdapter {
     private final GameModel model;
     private final GameRenderer renderer;
     private final GameController controller;
+    private final InputHandler inputHandler;
     private final Hud hud; // HUD manages its own stage and UI elements
     private final InputMultiplexer inputMultiplexer;
 
 
     // Define game world dimensions (adjust as needed)
-    public static final float WORLD_WIDTH = 1600; // Example width
-    public static final float WORLD_HEIGHT = 600; // Example height
+    public static float WORLD_WIDTH = 1600; // Example width
+    public static float WORLD_HEIGHT = 600; // Example height
 
 
     public GameScreen(final AgeOfWarGame game) {
@@ -53,21 +46,49 @@ public class GameScreen extends ScreenAdapter {
 
 
         model = new GameModel(); // Initialize the game state container
-        // *** FIX: Initialize the model's content BEFORE creating views/controllers that depend on it ***
         model.initialize(); // Create players, world, set starting values
 
-        renderer = new GameRenderer(game.batch, game.shapeRenderer, game.font, model, gameCamera); // Pass resources and model
+        renderer = new GameRenderer(game, game.batch, game.shapeRenderer, game.font, model, gameCamera); // Pass resources and model
         hud = new Hud(game.batch, model, game); // Pass SpriteBatch and Model for HUD data (NOW model is initialized)
         controller = new GameController(model, hud, gameCamera, gameViewport); // Pass model and HUD for interactions
+        inputHandler = new InputHandler(model, hud, gameCamera, gameViewport, controller);
 
         // Handle input from both the game world (controller) and the HUD stage
         inputMultiplexer = new InputMultiplexer();
-        inputMultiplexer.addProcessor(hud.getStage()); // HUD takes priority
-        inputMultiplexer.addProcessor(controller);   // Then game world input
+        inputMultiplexer.addProcessor(hud.getStage()); // HUD ưu tiên nhận input
+        inputMultiplexer.addProcessor(inputHandler);   // Sau đó đến input của thế giới game
         Gdx.input.setInputProcessor(inputMultiplexer);
 
+        if (game.assets.gameMap != null) {
+            MapProperties properties = game.assets.gameMap.getProperties();
+            int mapWidthInTiles = properties.get("width", Integer.class);
+            int mapHeightInTiles = properties.get("height", Integer.class);
+            int tilePixelWidth = properties.get("tilewidth", Integer.class);
+            int tilePixelHeight = properties.get("tileheight", Integer.class);
+
+            // Cập nhật kích thước thế giới game
+            WORLD_WIDTH = mapWidthInTiles * tilePixelWidth;
+            WORLD_HEIGHT = mapHeightInTiles * tilePixelHeight;
+
+            // Cập nhật lại viewport và camera nếu cần
+            gameViewport.setWorldSize(WORLD_WIDTH, WORLD_HEIGHT);
+            gameViewport.update(Gdx.graphics.getWidth(), Gdx.graphics.getHeight(), true); // Cập nhật cả viewport lẫn camera
+            // Cập nhật lại vị trí camera nếu muốn nó bắt đầu ở giữa map mới
+            // camera.position.set(WORLD_WIDTH / 2f, WORLD_HEIGHT / 2f, 0);
+            // camera.update();
+
+            Gdx.app.log("GameScreen", "Map loaded. World size set to: " + WORLD_WIDTH + "x" + WORLD_HEIGHT);
+
+            // CẬP NHẬT LẠI VỊ TRÍ BASE AI DỰA TRÊN WORLD_WIDTH MỚI
+            GameConfig.AI_BASE_X = WORLD_WIDTH - 100; // Ví dụ cập nhật lại
+            GameConfig.AI_SPAWN_X = GameConfig.AI_BASE_X - 60; // Ví dụ cập nhật lại
+
+        } else {
+            Gdx.app.error("GameScreen", "Map not loaded, cannot determine world size from map.");
+        }
+
         Gdx.app.log("GameScreen", "Screen initialized.");
-        // model.initialize(); // MOVED UP
+        model.initialize();
     }
 
     @Override
@@ -79,6 +100,7 @@ public class GameScreen extends ScreenAdapter {
     @Override
     public void render(float delta) {
         // --- Update ---
+        inputHandler.update(delta);
         model.update(delta); // Update game logic (unit movement, combat, AI, resources)
         controller.update(delta); // Update controller logic (camera movement)
         hud.update(delta); // Update HUD elements (timers, resource display)

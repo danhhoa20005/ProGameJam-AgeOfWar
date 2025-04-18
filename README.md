@@ -1,6 +1,7 @@
 # AgeOfWar
 
 ## Cây thư mục
+```
 [Tên Thư Mục Dự Án]/
 ├── core/
 │   ├── src/
@@ -74,9 +75,7 @@
 ├── gradlew                                # Gradle wrapper (Linux/Mac)
 ├── gradlew.bat                            # Gradle wrapper (Windows)
 └── README.md                              # File hướng dẫn
-
-
-
+```
 
 A [libGDX](https://libgdx.com/) project generated with [gdx-liftoff](https://github.com/libgdx/gdx-liftoff).
 

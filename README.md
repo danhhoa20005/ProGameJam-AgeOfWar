@@ -1,5 +1,83 @@
 # AgeOfWar
 
+## Cây thư mục
+[Tên Thư Mục Dự Án]/
+├── core/
+│   ├── src/
+│   │   └── com/
+│   │       └── ageofwar/
+│   │           ├── AgeOfWarGame.java          # Lớp Game chính
+│   │           ├── configs/                   # Package chứa các file cấu hình
+│   │           │   ├── GameConfig.java
+│   │           │   ├── TowerConfig.java       # Đã sửa từ các snippet trước (cần tạo file này)
+│   │           │   └── UnitConfig.java
+│   │           ├── controllers/               # Package chứa các lớp điều khiển
+│   │           │   ├── AIController.java      # (Mới) Quản lý logic AI
+│   │           │   ├── GameController.java    # Điều khiển logic game tổng quát (đã tinh gọn)
+│   │           │   └── InputHandler.java      # (Mới) Xử lý input thô
+│   │           ├── models/                    # Package chứa các lớp mô hình dữ liệu và trạng thái
+│   │           │   ├── Era.java
+│   │           │   ├── GameModel.java         # Model chính (đã tinh gọn)
+│   │           │   ├── World.java             # Quản lý thực thể (đã tinh gọn)
+│   │           │   ├── Entity.java            # Lớp cơ sở cho Unit/Tower
+│   │           │   ├── players/               # Sub-package cho Player
+│   │           │   │   ├── Player.java
+│   │           │   │   └── PlayerType.java
+│   │           │   ├── towers/                # Sub-package cho Tower
+│   │           │   │   ├── Tower.java
+│   │           │   │   └── TowerType.java
+│   │           │   └── units/                 # Sub-package cho Unit
+│   │           │       ├── Unit.java
+│   │           │       └── UnitType.java
+│   │           ├── screens/                   # Package chứa các màn hình game
+│   │           │   ├── EndGameScreen.java
+│   │           │   ├── GameScreen.java
+│   │           │   └── MainMenuScreen.java
+│   │           ├── systems/                   # (Mới) Package chứa các hệ thống xử lý logic cụ thể
+│   │           │   ├── CombatSystem.java      # (Mới) Xử lý logic chiến đấu
+│   │           │   └── SpecialAbilitySystem.java # (Mới) Xử lý logic kỹ năng đặc biệt
+│   │           ├── utils/                     # Package chứa các lớp tiện ích
+│   │           │   └── Assets.java
+│   │           └── views/                     # Package chứa các lớp hiển thị
+│   │               ├── GameRenderer.java      # Renderer chính, điều phối (đã tinh gọn)
+│   │               ├── Hud.java               # HUD chính, container (đã tinh gọn)
+│   │               ├── panels/                # (Mới) Package chứa các panel con của HUD
+│   │               │   ├── AIInfoPanel.java
+│   │               │   ├── GlobalControlPanel.java
+│   │               │   ├── MessagePanel.java
+│   │               │   ├── PlayerInfoPanel.java
+│   │               │   ├── TowerControlPanel.java
+│   │               │   └── UnitControlPanel.java
+│   │               └── renderers/             # (Mới) Package chứa các renderer con
+│   │                   ├── BaseRenderer.java        # Lớp cơ sở cho renderer
+│   │                   ├── PlayerBaseRenderer.java  # Vẽ căn cứ
+│   │                   ├── TowerRenderer.java       # Vẽ trụ
+│   │                   └── UnitRenderer.java        # Vẽ lính
+│   └── assets/                            # Thư mục chứa tài nguyên (quan trọng!)
+│       ├── images/
+│       │   └── placeholder.png            # (Cần tạo hoặc thay thế)
+│       ├── ui/
+│       │   ├── uiskin.atlas               # (Cần cung cấp)
+│       │   ├── uiskin.json                # (Cần cung cấp)
+│       │   └── default.fnt                # (Cần cung cấp - hoặc font của skin)
+│       └── maps/
+│           └── game_map.tmx               # (Cần tạo và load trong Assets.java)
+├── lwjgl3/                                # Module chạy game trên Desktop
+│   └── src/
+│       └── com/
+│           └── ageofwar/
+│               └── lwjgl3/
+│                   └── Lwjgl3Launcher.java
+├── build.gradle                           # File cấu hình build chính
+├── gradle.properties                      # File thuộc tính Gradle (phiên bản, tên app)
+├── settings.gradle                        # File cài đặt module Gradle
+├── gradlew                                # Gradle wrapper (Linux/Mac)
+├── gradlew.bat                            # Gradle wrapper (Windows)
+└── README.md                              # File hướng dẫn
+
+
+
+
 A [libGDX](https://libgdx.com/) project generated with [gdx-liftoff](https://github.com/libgdx/gdx-liftoff).
 
 This project was generated with a template including simple application launchers and an `ApplicationAdapter` extension that draws libGDX logo.

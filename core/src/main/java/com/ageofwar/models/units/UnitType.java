@@ -1,4 +1,4 @@
-package com.ageofwar.models;
+package com.ageofwar.models.units;
 
 // Represents the 16 unit types across 5 eras (adjust as needed)
 // Aiming for 3 units per era + 1 extra? Let's stick to 3 per era = 15 types for now.

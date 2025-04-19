@@ -1,5 +1,6 @@
-package com.ageofwar.models;
+package com.ageofwar.models.players;
 
+import com.ageofwar.models.Era;
 import com.badlogic.gdx.Gdx;
 import com.ageofwar.configs.GameConfig;
 
@@ -16,10 +17,6 @@ public class Player {
     private float specialCooldownTimer = 0f;
     private boolean specialReady = true;
 
-    // Timer for AI actions
-    float aiUpdateTimer = 0f; // Only used by AI player
-
-
     public Player(PlayerType type, int startGold, int startExp, int startHealth, float baseX) {
         this.type = type;
         this.gold = startGold;
@@ -30,7 +27,6 @@ public class Player {
         this.basePositionX = baseX;
         this.specialReady = true;
         this.specialCooldownTimer = 0f;
-        this.aiUpdateTimer = 0f; // Reset AI timer
         Gdx.app.log("Player", type + " created. HP: " + baseHealth + ", Gold: " + gold + ", Era: " + currentEra);
     }
 
@@ -89,7 +85,6 @@ public class Player {
         return 1.0f - (specialCooldownTimer / totalCooldown);
     }
 
-
     // Setters
     public void setCurrentEra(Era era) {
         this.currentEra = era;
@@ -102,5 +97,4 @@ public class Player {
         // Optionally update max health if upgrades increase it permanently
         // this.maxBaseHealth = Math.max(this.maxBaseHealth, this.baseHealth);
     }
-
 }

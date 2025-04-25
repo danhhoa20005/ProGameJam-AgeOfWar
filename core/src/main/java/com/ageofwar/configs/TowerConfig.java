@@ -12,8 +12,8 @@ import com.ageofwar.models.towers.TowerType;
 public class TowerConfig {
 
     // --- Kích thước Mặc định (Có thể di chuyển sang lớp cấu hình chung hơn) ---
-    private static final float DEFAULT_TOWER_WIDTH = 50;
-    private static final float DEFAULT_TOWER_HEIGHT = 80;
+    private static final float DEFAULT_TOWER_WIDTH = 1;
+    private static final float DEFAULT_TOWER_HEIGHT = 100;
 
     // --- Định nghĩa Tower ---
 

@@ -25,9 +25,10 @@ public class GameScreen extends ScreenAdapter {
     private final Hud hud;
     private final InputMultiplexer inputMultiplexer;
 
-    public static final float WORLD_WIDTH = 1600;
-    public static final float WORLD_HEIGHT = 600;
+    public static final float TILE_SIZE = 4f;
 
+    public static final float WORLD_WIDTH = 300 * TILE_SIZE;  // 1080f
+    public static final float WORLD_HEIGHT = 60 * TILE_SIZE;  // 240f
     // Biến để theo dõi kỷ nguyên cuối cùng đã biết
     private Era lastKnownPlayerEra = null;
 
@@ -37,7 +38,7 @@ public class GameScreen extends ScreenAdapter {
         float worldBuffer = 50f;
         float minX = GameConfig.PLAYER_BASE_X - worldBuffer;
         float maxX = GameConfig.AI_BASE_X + worldBuffer;
-        cameraManager = new CameraManager(WORLD_WIDTH/2, WORLD_HEIGHT/2, minX, maxX);
+        cameraManager = new CameraManager(WORLD_WIDTH/3 +worldBuffer, WORLD_HEIGHT, minX, maxX);
 
         model = new GameModel();
         try {

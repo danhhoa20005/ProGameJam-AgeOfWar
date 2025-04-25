@@ -17,8 +17,8 @@ public class Assets {
     public static final String UI_SKIN = "ui/uiskin.json";
 
     // Đường dẫn đến các file map theo kỷ nguyên (viết thường)
-    public static final String MAP_FOLDER = "map/"; // Thư mục chứa map
-    public static final String MAP_STONE = MAP_FOLDER + "untitled.tmx";
+    public static final String MAP_FOLDER = "MAP/"; // Thư mục chứa map
+    public static final String MAP_STONE = MAP_FOLDER + "map1.tmx";
     public static final String MAP_MEDIEVAL = MAP_FOLDER + "map_medieval.tmx";
     public static final String MAP_MODERN = MAP_FOLDER + "map_modern.tmx";
     public static final String MAP_FUTURE = MAP_FOLDER + "map_future.tmx";

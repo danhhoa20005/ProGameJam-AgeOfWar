@@ -120,11 +120,6 @@ public class InputHandler extends InputAdapter {
      * @param amountY Số lượng cuộn dọc (-1 cho cuộn lên/vào, +1 cho cuộn xuống/ra).
      * @return true nếu sự kiện đã được xử lý.
      */
-    @Override
-    public boolean scrolled(float amountX, float amountY) {
-        // Gọi phương thức zoom của CameraManager với giá trị cuộn dọc
-        cameraManager.zoomCamera(amountY);
-        // Trả về true để báo rằng chúng ta đã xử lý sự kiện này
-        return true;
-    }
+
+
 }

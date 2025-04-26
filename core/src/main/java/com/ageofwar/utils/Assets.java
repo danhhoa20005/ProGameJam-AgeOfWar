@@ -15,6 +15,7 @@ public class Assets {
     // --- ĐỊNH NGHĨA ĐƯỜNG DẪN ---
     public static final String PLACEHOLDER_TEXTURE = "images/placeholder.png";
     public static final String UI_SKIN = "ui/uiskin.json";
+    public static final String BUTTON_TEXTURE = "Buttons/Button_Blue_3Slides_Pressed.png"; // Thêm đường dẫn đến nút bấm
 
     // Đường dẫn đến các file map theo kỷ nguyên (viết thường)
     public static final String MAP_FOLDER = "MAP/"; // Thư mục chứa map
@@ -25,6 +26,7 @@ public class Assets {
 
     // --- BIẾN THAM CHIẾU TÀI NGUYÊN ---
     public Texture placeholderTex;
+    public Texture buttonTex; // Biến tham chiếu Texture cho nút bấm
     public Skin uiSkin;
     // Sử dụng ObjectMap để lưu trữ các map theo Era
     public ObjectMap<Era, TiledMap> eraMaps;
@@ -33,6 +35,7 @@ public class Assets {
         // Load textures, skin
         manager.load(PLACEHOLDER_TEXTURE, Texture.class);
         manager.load(UI_SKIN, Skin.class);
+        manager.load(BUTTON_TEXTURE, Texture.class); // Load Texture cho nút bấm
 
         // *** TẢI TẤT CẢ BẢN ĐỒ ***
         manager.setLoader(TiledMap.class, new TmxMapLoader(manager.getFileHandleResolver()));
@@ -52,6 +55,7 @@ public class Assets {
         Gdx.app.log("Assets", "Bắt đầu gán tài nguyên...");
         placeholderTex = manager.get(PLACEHOLDER_TEXTURE, Texture.class);
         uiSkin = manager.get(UI_SKIN, Skin.class);
+        buttonTex = manager.get(BUTTON_TEXTURE, Texture.class); // Gán Texture cho nút bấm
 
         // *** GÁN CÁC BẢN ĐỒ VÀO MAP ***
         eraMaps = new ObjectMap<>(); // Khởi tạo ObjectMap

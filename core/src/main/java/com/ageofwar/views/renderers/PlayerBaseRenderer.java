@@ -3,7 +3,7 @@ package com.ageofwar.views.renderers;
 import com.ageofwar.configs.GameConfig;
 import com.ageofwar.models.players.Player;
 import com.ageofwar.models.players.PlayerType;
-import com.badlogic.gdx.graphics.Color;
+import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.graphics.glutils.ShapeRenderer;
 
@@ -13,17 +13,31 @@ import com.badlogic.gdx.graphics.glutils.ShapeRenderer;
  */
 public class PlayerBaseRenderer extends BaseRenderer {
 
-    // Màu sắc cho placeholders
-    private final Color baseColorPlayer = Color.NAVY;
-    private final Color baseColorAI = Color.MAROON;
+    // Textures cho căn cứ
+    private final Texture playerBaseTextureFull;
+    private final Texture playerBaseTexture66;
+    private final Texture playerBaseTexture33;
+
+    private final Texture aiBaseTextureFull;
+    private final Texture aiBaseTexture66;
+    private final Texture aiBaseTexture33;
 
     /**
      * Khởi tạo PlayerBaseRenderer.
      * @param shapeRenderer ShapeRenderer để vẽ placeholder và thanh máu.
-     * @param batch SpriteBatch (dùng sau này cho sprites).
+     * @param batch SpriteBatch để vẽ sprite.
      */
     public PlayerBaseRenderer(ShapeRenderer shapeRenderer, SpriteBatch batch) {
         super(shapeRenderer, batch);
+
+        // Tự động load hình ảnh căn cứ
+        this.playerBaseTextureFull = new Texture("Base/xanh/1.png");
+        this.playerBaseTexture66 = new Texture("Base/xanh/2.png");
+        this.playerBaseTexture33 = new Texture("Base/xanh/3.png");
+
+        this.aiBaseTextureFull = new Texture("Base/do/1.png");
+        this.aiBaseTexture66 = new Texture("Base/do/2.png");
+        this.aiBaseTexture33 = new Texture("Base/do/3.png");
     }
 
     /**
@@ -32,27 +46,47 @@ public class PlayerBaseRenderer extends BaseRenderer {
      * @param aiPlayer Đối tượng Player của AI.
      */
     public void render(Player player, Player aiPlayer) {
-        // Vẽ Căn cứ (Placeholders)
-        drawBasePlaceholder(player);
-        drawBasePlaceholder(aiPlayer);
+        // Vẽ căn cứ bằng hình ảnh
+        drawBase(player);
+        drawBase(aiPlayer);
 
-        // Vẽ Thanh Máu cho Căn cứ
+        // Vẽ thanh máu cho căn cứ
         drawBaseHealthBar(player);
         drawBaseHealthBar(aiPlayer);
     }
 
     /**
-     * Vẽ hình ảnh tạm thời cho căn cứ của một người chơi.
+     * Lấy hình ảnh căn cứ dựa trên mức máu.
+     * @param player Người chơi (Player hoặc AI).
+     * @return Texture tương ứng với mức máu.
+     */
+    private Texture getBaseTexture(Player player) {
+        float healthPercentage = (float) player.getBaseHealth() / player.getMaxBaseHealth();
+
+        if (healthPercentage > 0.66f) {
+            return (player.getType() == PlayerType.PLAYER) ? playerBaseTextureFull : aiBaseTextureFull;
+        } else if (healthPercentage > 0.33f) {
+            return (player.getType() == PlayerType.PLAYER) ? playerBaseTexture66 : aiBaseTexture66;
+        } else {
+            return (player.getType() == PlayerType.PLAYER) ? playerBaseTexture33 : aiBaseTexture33;
+        }
+    }
+
+    /**
+     * Vẽ căn cứ bằng hình ảnh.
      * @param player Người chơi (Player hoặc AI).
      */
-    private void drawBasePlaceholder(Player player) {
-        Color baseColor = (player.getType() == PlayerType.PLAYER) ? baseColorPlayer : baseColorAI;
-        shapeRenderer.setColor(baseColor);
-        float baseWidth = 100;
-        float baseHeight = 150;
+    private void drawBase(Player player) {
+        Texture baseTexture = getBaseTexture(player);
+        float baseWidth = 40 * 4f; // Kích thước rộng căn cứ
+        float baseHeight = 60 * 4f; // Kích thước cao căn cứ
         float baseX = (player.getType() == PlayerType.PLAYER) ? GameConfig.PLAYER_BASE_X - baseWidth / 2 : GameConfig.AI_BASE_X - baseWidth / 2;
-        shapeRenderer.rect(baseX, GameConfig.GROUND_Y, baseWidth, baseHeight);
-        // Thêm logic vẽ sprite/animation ở đây sau này
+
+        if (baseTexture != null) {
+            batch.begin();
+            batch.draw(baseTexture, baseX, GameConfig.GROUND_Y - 7 * 4f, baseWidth, baseHeight);
+            batch.end();
+        }
     }
 
     /**
@@ -60,11 +94,10 @@ public class PlayerBaseRenderer extends BaseRenderer {
      * @param player Người chơi (Player hoặc AI).
      */
     private void drawBaseHealthBar(Player player) {
-        float baseWidth = 100;
-        float baseHeight = 150;
+        float baseWidth = 20 * 4f; // Chiều rộng thanh máu
+        float baseHeight = 30 * 4f; // Chiều cao căn cứ
         float baseX = (player.getType() == PlayerType.PLAYER) ? GameConfig.PLAYER_BASE_X - baseWidth / 2 : GameConfig.AI_BASE_X - baseWidth / 2;
+
         drawHealthBar(baseX, GameConfig.GROUND_Y + baseHeight + 5, baseWidth, 10, player.getBaseHealth(), player.getMaxBaseHealth());
     }
-
-    // Hàm drawHealthBar được kế thừa từ BaseRenderer
 }

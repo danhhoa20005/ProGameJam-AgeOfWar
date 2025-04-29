@@ -4,6 +4,8 @@ import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.ScreenAdapter;
 import com.badlogic.gdx.graphics.Color;
 import com.badlogic.gdx.graphics.GL20;
+import com.badlogic.gdx.graphics.Texture;
+import com.badlogic.gdx.graphics.g2d.TextureRegion;
 import com.badlogic.gdx.scenes.scene2d.Actor;
 import com.badlogic.gdx.scenes.scene2d.Stage;
 import com.badlogic.gdx.scenes.scene2d.ui.Label;
@@ -11,6 +13,7 @@ import com.badlogic.gdx.scenes.scene2d.ui.Skin;
 import com.badlogic.gdx.scenes.scene2d.ui.Table;
 import com.badlogic.gdx.scenes.scene2d.ui.TextButton;
 import com.badlogic.gdx.scenes.scene2d.utils.ChangeListener;
+import com.badlogic.gdx.scenes.scene2d.utils.TextureRegionDrawable;
 import com.badlogic.gdx.utils.viewport.ScreenViewport;
 import com.ageofwar.AgeOfWarGame;
 import com.ageofwar.models.players.PlayerType; // Enum to indicate winner
@@ -65,9 +68,21 @@ public class EndGameScreen extends ScreenAdapter {
         Label resultLabel = new Label(resultMessage, skin); // Use a larger font style
         resultLabel.setColor(winner == PlayerType.PLAYER ? Color.GREEN : Color.RED);
 
+        Texture btnTex = game.assets.buttonTex;
+        TextureRegion btnRegion = new TextureRegion(btnTex);
+        TextureRegionDrawable upDrawable = new TextureRegionDrawable(btnRegion);
+        TextureRegionDrawable downDrawable = new TextureRegionDrawable(btnRegion);
+        // You can tint downDrawable if you want a pressed effect:
+        // downDrawable.tint(Color.DARK_GRAY);
+        TextButton.TextButtonStyle customBtnStyle = new TextButton.TextButtonStyle(
+            upDrawable,    // up
+            downDrawable,  // down
+            null,          // checked
+            skin.getFont("default-font")
+        );
 
-        TextButton playAgainButton = new TextButton("Choi Lai", skin);
-        TextButton menuButton = new TextButton("Menu Chinh", skin);
+        TextButton playAgainButton = new TextButton("Choi Lai", customBtnStyle);
+        TextButton menuButton = new TextButton("Menu Chinh", customBtnStyle);
 
         playAgainButton.addListener(new ChangeListener() {
             @Override

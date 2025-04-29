@@ -60,8 +60,6 @@ public class Hud implements Disposable {
             loadedSkin = new Skin(Gdx.files.internal("ui/uiskin.json"));
         }
         this.skin = loadedSkin;
-        // --- Kết thúc tải skin ---
-
 
         // --- KHỞI TẠO CÁC PANEL CON ---
         messagePanel = new MessagePanel(skin); // Tạo message panel trước để truyền vào các control panel

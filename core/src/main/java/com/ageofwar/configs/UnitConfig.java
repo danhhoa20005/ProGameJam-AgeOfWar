@@ -5,9 +5,12 @@
  */
 package com.ageofwar.configs;
 
+import com.ageofwar.models.units.UnitState;
 import com.badlogic.gdx.utils.Array;
 import com.ageofwar.models.Era;
 import com.ageofwar.models.units.UnitType;
+
+import java.util.Objects;
 
 public class UnitConfig {
 
@@ -22,6 +25,8 @@ public class UnitConfig {
      * @param type Loại Unit.
      * @return Kỷ nguyên yêu cầu.
      */
+
+
     public static Era getUnitRequiredEra(UnitType type) {
         switch (type) {
             case CAVEMAN: case SLINGERMAN: case DINORIDER: return Era.STONE;

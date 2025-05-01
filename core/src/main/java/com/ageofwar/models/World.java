@@ -10,6 +10,7 @@ import com.ageofwar.models.players.Player;
 import com.ageofwar.models.players.PlayerType;
 import com.ageofwar.models.towers.Tower;
 import com.ageofwar.models.units.Unit;
+import com.ageofwar.models.units.UnitState;
 import com.ageofwar.systems.CombatSystem; // Import hệ thống mới
 // import com.ageofwar.systems.SpecialAbilitySystem; // Không cần trực tiếp ở đây nữa
 import com.badlogic.gdx.Gdx;
@@ -69,23 +70,25 @@ public class World implements Disposable {
     }
 
     /**
-     * Cập nhật trạng thái của tất cả các thực thể trong World.
-     * @param delta Thời gian trôi qua từ khung hình trước.
-     * @param player Đối tượng người chơi.
-     * @param aiPlayer Đối tượng AI.
-     * @param unitPool Pool quản lý đối tượng Unit.
-     * @param towerPool Pool quản lý đối tượng Tower.
+     * Cập nhật toàn bộ World mỗi frame.
      */
-    public void update(float delta, Player player, Player aiPlayer, Pool<Unit> unitPool, Pool<Tower> towerPool) {
-        // 1. Cập nhật Lính & Trụ của Người chơi
-        updateEntities(delta, playerUnits, aiUnits, aiTowers, aiPlayer, player); // Lính Player
-        updateTowers(delta, playerTowers, aiUnits, player); // Trụ Player
+    public void update(float delta,
+                       Player player,
+                       Player aiPlayer,
+                       Pool<Unit> up,
+                       Pool<Tower> tp) {
+        // Đảm bảo pools đã được set
+        if (unitPool == null) setPools(up, tp);
 
-        // 2. Cập nhật Lính & Trụ của AI
-        updateEntities(delta, aiUnits, playerUnits, playerTowers, player, aiPlayer); // Lính AI
-        updateTowers(delta, aiTowers, playerUnits, aiPlayer); // Trụ AI
+        // 1. Player units & towers
+        updateEntities(delta, playerUnits, aiUnits, aiTowers, aiPlayer, player);
+        updateTowers(delta, playerTowers, aiUnits, player);
 
-        // 3. Loại bỏ các thực thể đã chết
+        // 2. AI units & towers
+        updateEntities(delta, aiUnits, playerUnits, playerTowers, player, aiPlayer);
+        updateTowers(delta, aiTowers, playerUnits, aiPlayer);
+
+        // 3. Dọn dẹp
         cleanupEntities(playerUnits, unitPool);
         cleanupEntities(aiUnits, unitPool);
         cleanupTowers(playerTowers, towerPool);
@@ -93,112 +96,106 @@ public class World implements Disposable {
     }
 
     /**
-     * Phương thức cập nhật chung cho các Unit (di chuyển và ủy quyền chiến đấu).
-     * @param delta Thời gian delta.
-     * @param units Danh sách Unit cần cập nhật.
-     * @param enemyUnits Danh sách Unit đối phương.
-     * @param enemyTowers Danh sách Tower đối phương.
-     * @param enemyPlayer Đối tượng Player đối phương.
-     * @param owner Chủ sở hữu của các Unit trong danh sách `units`.
+     * Cập nhật di chuyển và tấn công cho nhóm Unit.
      */
-    private void updateEntities(float delta, Array<Unit> units, Array<Unit> enemyUnits, Array<Tower> enemyTowers, Player enemyPlayer, Player owner) {
+    private void updateEntities(float delta,
+                                Array<Unit> units,
+                                Array<Unit> enemyUnits,
+                                Array<Tower> enemyTowers,
+                                Player enemyPlayer,
+                                Player owner) {
         for (int i = units.size - 1; i >= 0; i--) {
             Unit unit = units.get(i);
-            unit.update(delta); // Cập nhật nội bộ (cooldown)
+            if (!unit.isAlive()) continue;
 
-            // --- Ủy quyền tìm mục tiêu cho CombatSystem ---
+            unit.update(delta); // cooldown nội bộ
+
+            // Tìm mục tiêu (Unit hoặc Tower) qua CombatSystem
             Entity target = combatSystem.findTargetForUnit(unit, enemyUnits, enemyTowers);
             unit.setTarget(target);
 
-            // --- Logic Di Chuyển (vẫn ở đây vì liên quan trực tiếp đến Unit) ---
             if (target != null) {
-                float distanceToTarget = Vector2.dst(unit.getX(), unit.getY(), target.getX(), target.getY());
-                if (distanceToTarget <= unit.getRange()) { // Trong tầm đánh
+                float dist = Vector2.dst(unit.getX(), unit.getY(), target.getX(), target.getY());
+                if (dist <= unit.getRange()) {
                     unit.setMoving(false);
                     if (unit.canAttack()) {
-                        // --- Ủy quyền xử lý tấn công cho CombatSystem ---
+                        unit.setCurrentState(UnitState.ATTACK);
                         combatSystem.resolveAttack(unit, target, owner);
-                        // Không cần kiểm tra target chết ở đây nữa, CombatSystem đã xử lý
                     }
-                } else { // Ngoài tầm đánh, di chuyển tới mục tiêu
+                } else {
                     unit.setMoving(true);
-                    float moveDirection = (target.getX() > unit.getX()) ? 1 : -1;
-                    unit.move(moveDirection * unit.getMoveSpeed() * delta);
+                    float dir = (target.getX() > unit.getX()) ? 1f : -1f;
+                    unit.move(dir * unit.getMoveSpeed() * delta);
                 }
-            } else { // Không có mục tiêu (Unit/Tower), di chuyển/tấn công căn cứ địch
+            } else {
+                // Tấn công base nếu không có target sinh ra
                 unit.setMoving(true);
-                float enemyBaseX = (unit.getOwnerType() == PlayerType.PLAYER) ? GameConfig.AI_BASE_X : GameConfig.PLAYER_BASE_X;
-                float distanceToBase = Math.abs(unit.getX() - enemyBaseX);
-
-                if (distanceToBase <= unit.getRange()) { // Trong tầm đánh căn cứ
+                float baseX = (unit.getOwnerType() == PlayerType.PLAYER)
+                    ? GameConfig.AI_BASE_X
+                    : GameConfig.PLAYER_BASE_X;
+                float dist = Math.abs(unit.getX() - baseX);
+                if (dist <= unit.getRange()) {
                     unit.setMoving(false);
                     if (unit.canAttack()) {
-                        // --- Ủy quyền tấn công căn cứ cho CombatSystem ---
+                        unit.setCurrentState(UnitState.ATTACK);
                         combatSystem.attackBase(unit, enemyPlayer);
                     }
-                } else { // Di chuyển về căn cứ
-                    float moveDirection = (enemyBaseX > unit.getX()) ? 1 : -1;
-                    unit.move(moveDirection * unit.getMoveSpeed() * delta);
+                } else {
+                    float dir = (baseX > unit.getX()) ? 1f : -1f;
+                    unit.move(dir * unit.getMoveSpeed() * delta);
                 }
             }
 
-            // Giới hạn vị trí unit trong phạm vi thế giới
-            float unitWidth = UnitConfig.getUnitWidth(unit.getType());
-            unit.setPosition(MathUtils.clamp(unit.getX(), unitWidth / 2, GameScreen.WORLD_WIDTH - unitWidth / 2), unit.getY());
+            // Giới hạn trong world bounds
+            float halfW = UnitConfig.getUnitWidth(unit.getType()) * 0.5f;
+            float x = MathUtils.clamp(unit.getX(), halfW, GameScreen.WORLD_WIDTH - halfW);
+            unit.setPosition(x, unit.getY());
         }
     }
 
     /**
-     * Logic cập nhật dành riêng cho Tower (ủy quyền chiến đấu).
-     * @param delta Thời gian delta.
-     * @param towers Danh sách Tower cần cập nhật.
-     * @param enemyUnits Danh sách Unit đối phương.
-     * @param owner Chủ sở hữu của các Tower trong danh sách `towers`.
+     * Cập nhật tấn công cho nhóm Tower.
      */
-    private void updateTowers(float delta, Array<Tower> towers, Array<Unit> enemyUnits, Player owner) {
+    private void updateTowers(float delta,
+                              Array<Tower> towers,
+                              Array<Unit> enemyUnits,
+                              Player owner) {
         for (int i = towers.size - 1; i >= 0; i--) {
             Tower tower = towers.get(i);
-            tower.update(delta); // Cập nhật cooldown
+            if (!tower.isAlive()) continue;
 
-            // --- Ủy quyền tìm mục tiêu cho CombatSystem ---
+            tower.update(delta);
             Unit target = combatSystem.findTargetForTower(tower, enemyUnits);
             tower.setTarget(target);
 
             if (target != null && tower.canAttack()) {
-                // --- Ủy quyền xử lý tấn công cho CombatSystem ---
                 combatSystem.resolveAttack(tower, target, owner);
             }
         }
     }
 
     /**
-     * Dọn dẹp các Unit đã chết khỏi danh sách và trả chúng về Pool.
-     * @param units Danh sách Unit cần dọn dẹp.
-     * @param pool Pool của Unit.
+     * Dọn dẹp Unit đã chết.
      */
     private void cleanupEntities(Array<Unit> units, Pool<Unit> pool) {
-        // Giữ nguyên logic này
         for (int i = units.size - 1; i >= 0; i--) {
-            Unit unit = units.get(i);
-            if (!unit.isAlive()) {
+            Unit u = units.get(i);
+            if (!u.isAlive()) {
                 units.removeIndex(i);
-                pool.free(unit);
+                pool.free(u);
             }
         }
     }
 
     /**
-     * Dọn dẹp các Tower đã chết khỏi danh sách và trả chúng về Pool.
-     * @param towers Danh sách Tower cần dọn dẹp.
-     * @param pool Pool của Tower.
+     * Dọn dẹp Tower đã chết.
      */
     private void cleanupTowers(Array<Tower> towers, Pool<Tower> pool) {
-        // Giữ nguyên logic này
         for (int i = towers.size - 1; i >= 0; i--) {
-            Tower tower = towers.get(i);
-            if (!tower.isAlive()) {
+            Tower t = towers.get(i);
+            if (!t.isAlive()) {
                 towers.removeIndex(i);
-                pool.free(tower);
+                pool.free(t);
             }
         }
     }

@@ -85,7 +85,7 @@ public class GameConfig {
 
 
     // --- Cài đặt AI ---
-    public static final float AI_SPAWN_INTERVAL = 3.0f; // Tần suất AI cố gắng tạo lính (điều chỉnh theo độ khó)
+    public static final float AI_SPAWN_INTERVAL = 30.0f; // Tần suất AI cố gắng tạo lính (điều chỉnh theo độ khó)
 
     // --- Bố cục Thế giới ---
     public static final float GROUND_Y =15*4f; // Tọa độ Y của mặt đất

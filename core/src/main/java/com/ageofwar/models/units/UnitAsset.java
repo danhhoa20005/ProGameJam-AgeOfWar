@@ -16,14 +16,14 @@ public class UnitAsset {
 
     public void initialize() {
         // Khởi tạo dữ liệu cho UnitType CAVEMAN
-        Map<UnitState, String> cavemen = new HashMap<>();
-        cavemen.put(UnitState.ATTACK, "assets/ui/Orc/Orc1/orc1_Attack.png");
-        cavemen.put(UnitState.DEATH, "assets/ui/Orc/Orc1/orc1_Death.png");
-        cavemen.put(UnitState.HURT, "assets/ui/Orc/Orc1/orc1_Hurt.png");
-        cavemen.put(UnitState.IDLE, "assets/ui/Orc/Orc1/orc1_Idle.png");
-        cavemen.put(UnitState.WALK, "assets/ui/Orc/Orc1/orc1_Walk.png");
+        Map<UnitState, String> cavemanAssets = new HashMap<>();
+        cavemanAssets.put(UnitState.ATTACK, "ui/Orc/Orc1/Attack.png");
+        cavemanAssets.put(UnitState.DEATH,  "ui/Orc/Orc1/Death.png");
+        cavemanAssets.put(UnitState.HURT,   "ui/Orc/Orc1/Hurt.png");
+        cavemanAssets.put(UnitState.IDLE,   "ui/Orc/Orc1/Idle.png");
+        cavemanAssets.put(UnitState.WALK,   "ui/Orc/Orc1/Walk.png");
 
-        assetMap.put(UnitType.CAVEMAN, cavemen);
+        assetMap.put(UnitType.CAVEMAN, cavemanAssets);
 
         // TODO: Thêm dữ liệu cho các UnitType khác tại đây
     }

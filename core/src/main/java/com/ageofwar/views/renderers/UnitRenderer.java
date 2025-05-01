@@ -1,7 +1,7 @@
-package com.ageofwar.views.renderers; // Tạo package mới cho các renderer con
+package com.ageofwar.views.renderers;
 
 import com.ageofwar.models.units.Unit;
-import com.ageofwar.models.World; // Để lấy danh sách units
+import com.ageofwar.models.World;
 import com.badlogic.gdx.graphics.Color;
 import com.badlogic.gdx.graphics.g2d.Animation;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
@@ -12,72 +12,73 @@ import com.badlogic.gdx.utils.Array;
 
 /**
  * Lớp UnitRenderer chịu trách nhiệm vẽ các đơn vị lính (Units)
- * của cả người chơi và AI, bao gồm cả thanh máu.
+ * của cả người chơi và AI, bao gồm cả sprite animations và thanh máu.
+ *
+ * NOTE:
+ *  - SpriteBatch.begin()/end() vẫn do UnitRenderer quản lý.
+ *  - ShapeRenderer.begin()/end() phải được gọi bên ngoài (GameRenderer).
  */
-public class UnitRenderer extends BaseRenderer { // Kế thừa BaseRenderer để dùng chung hàm vẽ thanh máu
+public class UnitRenderer extends BaseRenderer {
 
-    // Màu sắc cho placeholders
     private final Color playerColor = Color.BLUE;
-    private final Color aiColor = Color.RED;
+    private final Color aiColor     = Color.RED;
 
-    /**
-     * Khởi tạo UnitRenderer.
-     * @param shapeRenderer ShapeRenderer để vẽ placeholder và thanh máu.
-     * @param batch SpriteBatch (dùng sau này cho sprites).
-     */
+    private float stateTime = 0f;
+
+    private final ShapeRenderer shapeRenderer;
+    private final SpriteBatch  batch;
+
     public UnitRenderer(ShapeRenderer shapeRenderer, SpriteBatch batch) {
-        super(shapeRenderer, batch); // Gọi constructor của lớp cha
+        super(shapeRenderer, batch);
+        this.shapeRenderer = shapeRenderer;
+        this.batch         = batch;
     }
 
     /**
      * Vẽ tất cả các Unit lên màn hình.
+     *
      * @param world Đối tượng World chứa danh sách Units.
+     * @param delta Thời gian trôi qua từ frame trước để tính animation.
      */
-    public void render(World world) {
-        // Bắt đầu vẽ hình dạng (nếu chưa bắt đầu từ GameRenderer) - Tốt hơn là quản lý begin/end ở GameRenderer
-        // shapeRenderer.begin(ShapeRenderer.ShapeType.Filled); // Quản lý ở GameRenderer
+    public void render(World world, float delta) {
+        stateTime += delta;
 
-        // Vẽ Lính (Placeholders)
-        drawUnitPlaceholders(world.getPlayerUnits(), playerColor);
-        drawUnitPlaceholders(world.getAiUnits(), aiColor);
+        batch.begin();
+        drawUnits(world.getPlayerUnits());
+        drawUnits(world.getAiUnits());
+        batch.end();
 
-        // Vẽ Thanh Máu cho Lính
         drawUnitHealthBars(world.getPlayerUnits());
         drawUnitHealthBars(world.getAiUnits());
-
-        // Kết thúc vẽ hình dạng (nếu bắt đầu ở đây)
-        // shapeRenderer.end(); // Quản lý ở GameRenderer
     }
 
-    /**
-     * Vẽ hình ảnh tạm thời (placeholders) cho một danh sách Unit.
-     * @param units Danh sách Unit cần vẽ.
-     * @param color Màu sắc để vẽ.
-     */
-    private void drawUnitPlaceholders(Array<Unit> units, Color color) {
-        shapeRenderer.setColor(color);
+    private void drawUnits(Array<Unit> units) {
         for (Unit unit : units) {
-            if (unit.isAlive()) {
-                Rectangle bounds = unit.getBounds();
-                shapeRenderer.rect(bounds.x, bounds.y, bounds.width, bounds.height);
-                // Thêm logic animation ở đây sau này
+            if (!unit.isAlive()) continue;
+            Rectangle b = unit.getBounds();
+            Animation<TextureRegion> anim = unit.getCurrentAnimation();
+            TextureRegion frame = anim.getKeyFrame(stateTime, true);
+
+            if (unit.isFacingRight()) {
+                batch.draw(frame, b.x, b.y, b.width, b.height);
+            } else {
+                batch.draw(frame, b.x + b.width, b.y, -b.width, b.height);
             }
         }
     }
 
-    /**
-     * Vẽ thanh máu cho một danh sách Unit.
-     * @param units Danh sách Unit cần vẽ thanh máu.
-     */
     private void drawUnitHealthBars(Array<Unit> units) {
         for (Unit unit : units) {
-            if (unit.isAlive()) {
-                drawHealthBar(unit.getBounds().x, unit.getBounds().y + unit.getBounds().height + 5,
-                    unit.getBounds().width, 5,
-                    unit.getHealth(), unit.getMaxHealth());
-            }
+            if (!unit.isAlive()) continue;
+            Rectangle b = unit.getBounds();
+            drawHealthBar(
+                b.x,
+                b.y + b.height + 5,
+                b.width,
+                5,
+                unit.getHealth(),
+                unit.getMaxHealth()
+            );
         }
     }
-
-    // Hàm drawHealthBar được kế thừa từ BaseRenderer
 }

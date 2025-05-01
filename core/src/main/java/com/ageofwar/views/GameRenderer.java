@@ -111,7 +111,7 @@ public class GameRenderer implements Disposable {
         shapeRenderer.begin(ShapeType.Filled);
         baseRenderer.render(model.getPlayer(), model.getAiPlayer());
         towerRenderer.render(model.getWorld());
-        unitRenderer.render(model.getWorld());
+        unitRenderer.render(model.getWorld(), delta);
         shapeRenderer.end();
 
         // 3. Vẽ bằng SpriteBatch (nếu cần - giữ nguyên)

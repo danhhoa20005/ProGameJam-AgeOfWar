@@ -3,7 +3,9 @@ package com.ageofwar.views.renderers; // Tạo package mới cho các renderer c
 import com.ageofwar.models.units.Unit;
 import com.ageofwar.models.World; // Để lấy danh sách units
 import com.badlogic.gdx.graphics.Color;
+import com.badlogic.gdx.graphics.g2d.Animation;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
+import com.badlogic.gdx.graphics.g2d.TextureRegion;
 import com.badlogic.gdx.graphics.glutils.ShapeRenderer;
 import com.badlogic.gdx.math.Rectangle;
 import com.badlogic.gdx.utils.Array;
@@ -58,8 +60,7 @@ public class UnitRenderer extends BaseRenderer { // Kế thừa BaseRenderer đ�
             if (unit.isAlive()) {
                 Rectangle bounds = unit.getBounds();
                 shapeRenderer.rect(bounds.x, bounds.y, bounds.width, bounds.height);
-                // Thêm logic vẽ sprite/animation ở đây sau này
-                // batch.draw(...)
+                // Thêm logic animation ở đây sau này
             }
         }
     }

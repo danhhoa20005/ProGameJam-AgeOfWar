@@ -150,7 +150,7 @@ public class GameModel implements Disposable {
                 GameConfig.GROUND_Y
             );
             world.addUnit(unit); // Thêm unit vào thế giới
-            Gdx.app.debug("GameModel", ownerType + " đã sinh " + unitType); // Gỡ lỗi: Sinh lính
+            System.out.println(ownerType + " đã sinh " + unitType); // Gỡ lỗi: Sinh lính
             return true;
         } else {
             if (owner.getGold() < cost) Gdx.app.debug("GameModel", ownerType + " không thể sinh " + unitType + ": không đủ vàng.");

@@ -15,15 +15,41 @@ public class UnitAsset {
     }
 
     public void initialize() {
-        // Khởi tạo dữ liệu cho UnitType CAVEMAN
-        Map<UnitState, String> cavemanAssets = new HashMap<>();
-        cavemanAssets.put(UnitState.ATTACK, "ui/Orc/Orc1/Attack.png");
-        cavemanAssets.put(UnitState.DEATH,  "ui/Orc/Orc1/Death.png");
-        cavemanAssets.put(UnitState.HURT,   "ui/Orc/Orc1/Hurt.png");
-        cavemanAssets.put(UnitState.IDLE,   "ui/Orc/Orc1/Idle.png");
-        cavemanAssets.put(UnitState.WALK,   "ui/Orc/Orc1/Walk.png");
+        // Khởi tạo dữ liệu cho UnitType ORC
+        Map<UnitState, String> orcAssets = new HashMap<>();
+        orcAssets.put(UnitState.ATTACK, "ui/Orc/Orc1/Attack.png");
+        orcAssets.put(UnitState.DEATH,  "ui/Orc/Orc1/Death.png");
+        orcAssets.put(UnitState.HURT,   "ui/Orc/Orc1/Hurt.png");
+        orcAssets.put(UnitState.IDLE,   "ui/Orc/Orc1/Idle.png");
+        orcAssets.put(UnitState.WALK,   "ui/Orc/Orc1/Walk.png");
+        assetMap.put(UnitType.ORC, orcAssets);
 
-        assetMap.put(UnitType.CAVEMAN, cavemanAssets);
+        // Khởi tạo dữ liệu cho UnitType PREDATOR_PLANT
+        Map<UnitState, String> predatorPlantAssets = new HashMap<>();
+        predatorPlantAssets.put(UnitState.ATTACK, "ui/PredatorPlant/Plant1/Attack.png");
+        predatorPlantAssets.put(UnitState.DEATH,  "ui/PredatorPlant/Plant1/Death.png");
+        predatorPlantAssets.put(UnitState.HURT,   "ui/PredatorPlant/Plant1/Hurt.png");
+        predatorPlantAssets.put(UnitState.IDLE,   "ui/PredatorPlant/Plant1/Idle.png");
+        predatorPlantAssets.put(UnitState.WALK,   "ui/PredatorPlant/Plant1/Walk.png");
+        assetMap.put(UnitType.PREDATOR_PLANT, predatorPlantAssets);
+
+        // Khởi tạo dữ liệu cho UnitType SLIME
+        Map<UnitState, String> slimeAssets = new HashMap<>();
+        slimeAssets.put(UnitState.ATTACK, "ui/Slime/Slime1/Attack.png");
+        slimeAssets.put(UnitState.DEATH,  "ui/Slime/Slime1/Death.png");
+        slimeAssets.put(UnitState.HURT,   "ui/Slime/Slime1/Hurt.png");
+        slimeAssets.put(UnitState.IDLE,   "ui/Slime/Slime1/Idle.png");
+        slimeAssets.put(UnitState.WALK,   "ui/Slime/Slime1/Walk.png");
+        assetMap.put(UnitType.SLIME, slimeAssets);
+
+        // Khởi tạo dữ liệu cho UnitType VAMPIRE
+        Map<UnitState, String> vampireAssets = new HashMap<>();
+        vampireAssets.put(UnitState.ATTACK, "ui/Vampire/Vampires1/Attack.png");
+        vampireAssets.put(UnitState.DEATH,  "ui/Vampire/Vampires1/Death.png");
+        vampireAssets.put(UnitState.HURT,   "ui/Vampire/Vampires1/Hurt.png");
+        vampireAssets.put(UnitState.IDLE,   "ui/Vampire/Vampires1/Idle.png");
+        vampireAssets.put(UnitState.WALK,   "ui/Vampire/Vampires1/Walk.png");
+        assetMap.put(UnitType.VAMPIRE, vampireAssets);
 
         // TODO: Thêm dữ liệu cho các UnitType khác tại đây
     }

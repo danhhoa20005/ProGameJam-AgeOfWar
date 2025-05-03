@@ -5,12 +5,9 @@
  */
 package com.ageofwar.configs;
 
-import com.ageofwar.models.units.UnitState;
 import com.badlogic.gdx.utils.Array;
 import com.ageofwar.models.Era;
 import com.ageofwar.models.units.UnitType;
-
-import java.util.Objects;
 
 public class UnitConfig {
 
@@ -29,7 +26,7 @@ public class UnitConfig {
 
     public static Era getUnitRequiredEra(UnitType type) {
         switch (type) {
-            case CAVEMAN: case SLINGERMAN: case DINORIDER: return Era.STONE;
+            case ORC: case PREDATOR_PLANT: case SLIME: return Era.STONE;
             case SWORDSMAN: case ARCHER: case KNIGHT: return Era.MEDIEVAL;
             case RIFLEMAN: case CANNON: case GRENADIER: return Era.INDUSTRIAL;
             case MARINE: case TANK: case HELICOPTER: return Era.MODERN; // HELICOPTER -> Tên lửa?
@@ -47,9 +44,9 @@ public class UnitConfig {
         // Chi phí tạm thời - CẦN CÂN BẰNG!
         switch (type) {
             // Đá
-            case CAVEMAN: return 50;
-            case SLINGERMAN: return 75;
-            case DINORIDER: return 150;
+            case ORC: return 50;
+            case PREDATOR_PLANT: return 75;
+            case SLIME: return 150;
             // Trung Cổ
             case SWORDSMAN: return 100;
             case ARCHER: return 125;
@@ -78,9 +75,9 @@ public class UnitConfig {
     public static int getUnitHealth(UnitType type) {
         // HP tạm thời - CẦN CÂN BẰNG!
         switch (type) {
-            case CAVEMAN: return 100;
-            case SLINGERMAN: return 70;
-            case DINORIDER: return 250;
+            case ORC: return 100;
+            case PREDATOR_PLANT: return 70;
+            case SLIME: return 250;
             case SWORDSMAN: return 180;
             case ARCHER: return 100;
             case KNIGHT: return 400;
@@ -105,9 +102,9 @@ public class UnitConfig {
     public static int getUnitDamage(UnitType type) {
         // Sát thương tạm thời - CẦN CÂN BẰNG!
         switch (type) {
-            case CAVEMAN: return 15;
-            case SLINGERMAN: return 10;
-            case DINORIDER: return 30;
+            case ORC: return 15;
+            case PREDATOR_PLANT: return 10;
+            case SLIME: return 30;
             case SWORDSMAN: return 25;
             case ARCHER: return 18;
             case KNIGHT: return 40;
@@ -132,9 +129,9 @@ public class UnitConfig {
     public static float getUnitAttackSpeed(UnitType type) {
         // Số đòn đánh mỗi giây - CẦN CÂN BẰNG!
         switch (type) {
-            case CAVEMAN: return 1.0f;
-            case SLINGERMAN: return 0.8f;
-            case DINORIDER: return 1.2f;
+            case ORC: return 1.0f;
+            case PREDATOR_PLANT: return 0.8f;
+            case SLIME: return 1.2f;
             case SWORDSMAN: return 1.1f;
             case ARCHER: return 0.9f;
             case KNIGHT: return 0.8f;
@@ -160,14 +157,14 @@ public class UnitConfig {
         // Tầm đánh tạm thời - CẦN CÂN BẰNG!
         switch (type) {
             // Unit cận chiến có tầm đánh ngắn
-            case CAVEMAN: return 50f;
-            case DINORIDER: return 60f;
+            case ORC: return 50f;
+            case SLIME: return 60f;
             case SWORDSMAN: return 55f;
             case KNIGHT: return 65f;
             case MECH_WARRIOR: return 80f; // Cận chiến hạng nặng có thể có tầm với xa hơn một chút
 
             // Unit đánh xa
-            case SLINGERMAN: return 150f;
+            case PREDATOR_PLANT: return 150f;
             case ARCHER: return 200f;
             case RIFLEMAN: return 220f;
             case CANNON: return 300f;
@@ -189,9 +186,9 @@ public class UnitConfig {
     public static float getUnitMoveSpeed(UnitType type) {
         // Pixels mỗi giây - CẦN CÂN BẰNG!
         switch (type) {
-            case CAVEMAN: return 60f;
-            case SLINGERMAN: return 55f;
-            case DINORIDER: return 90f; // Nhanh hơn
+            case ORC: return 60f;
+            case PREDATOR_PLANT: return 55f;
+            case SLIME: return 90f; // Nhanh hơn
             case SWORDSMAN: return 70f;
             case ARCHER: return 65f;
             case KNIGHT: return 50f; // Chậm hơn, trâu bò
@@ -244,7 +241,7 @@ public class UnitConfig {
     // --- Phương thức Trợ giúp ---
 
     // Mảng chứa các loại Unit cho từng kỷ nguyên
-    private static final Array<UnitType> stoneUnits = Array.with(UnitType.CAVEMAN, UnitType.SLINGERMAN, UnitType.DINORIDER);
+    private static final Array<UnitType> stoneUnits = Array.with(UnitType.ORC, UnitType.PREDATOR_PLANT, UnitType.SLIME);
     private static final Array<UnitType> medievalUnits = Array.with(UnitType.SWORDSMAN, UnitType.ARCHER, UnitType.KNIGHT);
     private static final Array<UnitType> industrialUnits = Array.with(UnitType.RIFLEMAN, UnitType.CANNON, UnitType.GRENADIER);
     private static final Array<UnitType> modernUnits = Array.with(UnitType.MARINE, UnitType.TANK, UnitType.HELICOPTER); // HELICOPTER -> Tên lửa

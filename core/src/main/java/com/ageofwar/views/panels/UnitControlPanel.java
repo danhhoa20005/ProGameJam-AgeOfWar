@@ -65,6 +65,7 @@ public class UnitControlPanel extends Table {
                 public void clicked(InputEvent event, float x, float y) {
                     Gdx.app.debug("UnitControlPanel", "Nút Sinh Lính được nhấn: " + type);
                     boolean success = model.spawnUnit(PlayerType.PLAYER, type);
+                    System.out.println("Unit type is:" + type);
                     if (!success) {
                         if (model.getPlayer().getGold() < UnitConfig.getUnitCost(type)) {
                             messagePanel.showMessage("Không đủ Vàng!", 2f);

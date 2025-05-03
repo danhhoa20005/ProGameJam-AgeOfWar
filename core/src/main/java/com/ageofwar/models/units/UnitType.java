@@ -4,9 +4,10 @@ package com.ageofwar.models.units;
 // Aiming for 3 units per era + 1 extra? Let's stick to 3 per era = 15 types for now.
 public enum UnitType {
     // Stone Age (3)
-    CAVEMAN,        // Melee basic
-    SLINGERMAN,     // Ranged basic
-    DINORIDER,      // Melee stronger/faster?
+    ORC,        // Melee basic
+    PREDATOR_PLANT,     // Ranged basic
+    SLIME,      // Melee stronger/faster?
+    VAMPIRE,
 
     // Medieval Age (3)
     SWORDSMAN,      // Melee standard

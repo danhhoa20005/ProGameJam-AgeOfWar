@@ -32,13 +32,19 @@ public class Unit extends Entity {
     private Texture idleSheet;
     private Texture walkSheet;
 
-    private static Map<UnitState, TextureRegion[]> regionCache = new HashMap<>();
+    // Cache animations by unit type and state to prevent sharing across different unit types
+    private static Map<String, TextureRegion[]> regionCache = new HashMap<>();
 
-    private Animation<TextureRegion> attackAnimation;
-    private Animation<TextureRegion> deathAnimation;
-    private Animation<TextureRegion> hurtAnimation;
-    private Animation<TextureRegion> idleAnimation;
-    private Animation<TextureRegion> walkAnimation;
+    private Animation<TextureRegion> attackAnimationRight;
+    private Animation<TextureRegion> attackAnimationLeft;
+    private Animation<TextureRegion> deathAnimationRight;
+    private Animation<TextureRegion> deathAnimationLeft;
+    private Animation<TextureRegion> hurtAnimationRight;
+    private Animation<TextureRegion> hurtAnimationLeft;
+    private Animation<TextureRegion> idleAnimationRight;
+    private Animation<TextureRegion> idleAnimationLeft;
+    private Animation<TextureRegion> walkAnimationRight;
+    private Animation<TextureRegion> walkAnimationLeft;
 
     public Unit() {
         super();
@@ -75,29 +81,34 @@ public class Unit extends Entity {
         walkSheet   = new Texture(asset.getAssetLink(unitType, UnitState.WALK));
 
         float frameDuration = 0.1f;
-        attackAnimation = createAnimation(attackSheet, frameDuration, UnitState.ATTACK);
-        deathAnimation  = createAnimation(deathSheet,  frameDuration, UnitState.DEATH);
-        hurtAnimation   = createAnimation(hurtSheet,   frameDuration, UnitState.HURT);
-        idleAnimation   = createAnimation(idleSheet,   frameDuration, UnitState.IDLE);
-        walkAnimation   = createAnimation(walkSheet,   frameDuration, UnitState.WALK);
+        attackAnimationRight = createAnimation(attackSheet, frameDuration, UnitState.ATTACK, true);
+        attackAnimationLeft  = createAnimation(attackSheet, frameDuration, UnitState.ATTACK, false);
+        deathAnimationRight  = createAnimation(deathSheet,  frameDuration, UnitState.DEATH, true);
+        deathAnimationLeft   = createAnimation(deathSheet,  frameDuration, UnitState.DEATH, false);
+        hurtAnimationRight   = createAnimation(hurtSheet,   frameDuration, UnitState.HURT, true);
+        hurtAnimationLeft    = createAnimation(hurtSheet,   frameDuration, UnitState.HURT, false);
+        idleAnimationRight   = createAnimation(idleSheet,   frameDuration, UnitState.IDLE, true);
+        idleAnimationLeft    = createAnimation(idleSheet,   frameDuration, UnitState.IDLE, false);
+        walkAnimationRight   = createAnimation(walkSheet,   frameDuration, UnitState.WALK, true);
+        walkAnimationLeft    = createAnimation(walkSheet,   frameDuration, UnitState.WALK, false);
 
         Gdx.app.debug("Unit Init", owner + " " + unitType + " initialized. Speed: " + spd);
     }
 
-    private Animation<TextureRegion> createAnimation(Texture sheet, float delta, UnitState state) {
-        if (!regionCache.containsKey(state)) {
+    private Animation<TextureRegion> createAnimation(Texture sheet, float delta, UnitState state, boolean facingRight) {
+        // Build a unique cache key per unit type, state, owner and facing
+        String cacheKey = unitType.name() + "_" + state.name() + "_" + playerType.name() + "_" + (facingRight ? "R" : "L");
+        if (!regionCache.containsKey(cacheKey)) {
             TextureRegion[][] tmp = TextureRegion.split(sheet, 64, 64);
-            regionCache.put(state,
-                tmp[asset.getAnimationRow(playerType, unitType, state) - 1]
-            );
+            TextureRegion[] regions = tmp[facingRight ? 3 : 2];
+            regionCache.put(cacheKey, regions);
         }
-        return new Animation<>(delta, regionCache.get(state));
+        return new Animation<>(delta, regionCache.get(cacheKey));
     }
 
     @Override
     public void update(float delta) {
         super.update(delta);
-        // currentState chỉ đổi khi logic world/CombatSystem gọi setCurrentState(...)
     }
 
     public void move(float deltaX) {
@@ -114,7 +125,6 @@ public class Unit extends Entity {
 
     @Override
     public void reset() {
-        // Chỉ reset trạng thái nội bộ, không dispose texture
         super.reset();
         unitType = null;
         moveSpeed = 0;
@@ -122,18 +132,17 @@ public class Unit extends Entity {
         facingRight = true;
     }
 
-    // Getters và setters khác...
 
     public UnitType getType() { return unitType; }
     public float getMoveSpeed() { return moveSpeed; }
     public boolean isMoving() { return moving; }
     public Animation<TextureRegion> getCurrentAnimation() {
         switch (currentState) {
-            case ATTACK: return attackAnimation;
-            case WALK:   return walkAnimation;
-            case HURT:   return hurtAnimation;
-            case DEATH:  return deathAnimation;
-            default:     return idleAnimation;
+            case ATTACK: return facingRight ? attackAnimationRight : attackAnimationLeft;
+            case WALK:   return facingRight ? walkAnimationRight   : walkAnimationLeft;
+            case HURT:   return facingRight ? hurtAnimationRight   : hurtAnimationLeft;
+            case DEATH:  return facingRight ? deathAnimationRight  : deathAnimationLeft;
+            default:     return facingRight ? idleAnimationRight   : idleAnimationLeft;
         }
     }
     public UnitState getCurrentState() { return currentState; }

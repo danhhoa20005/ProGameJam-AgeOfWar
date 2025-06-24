@@ -59,11 +59,8 @@ public class UnitRenderer extends BaseRenderer {
             Animation<TextureRegion> anim = unit.getCurrentAnimation();
             TextureRegion frame = anim.getKeyFrame(stateTime, true);
 
-            if (unit.isFacingRight()) {
-                batch.draw(frame, b.x, b.y, b.width, b.height);
-            } else {
-                batch.draw(frame, b.x + b.width, b.y, -b.width, b.height);
-            }
+            // Draw without flipping; animation frames already represent orientation
+            batch.draw(frame, b.x, b.y, b.width, b.height);
         }
     }
 

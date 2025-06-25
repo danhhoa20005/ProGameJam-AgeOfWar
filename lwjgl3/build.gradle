@@ -41,6 +41,7 @@ project(':lwjgl3') { // Specific configuration for lwjgl3
     implementation project(':core') // Depends on the core project
     api "com.badlogicgames.gdx:gdx-backend-lwjgl3:$gdxVersion"
     api "com.badlogicgames.gdx:gdx-platform:$gdxVersion:natives-desktop"
+    api "com.badlogicgames.gdx:gdx-freetype-platform:$gdxVersion:natives-desktop" // Add FreeType natives for Unicode font support
     // Add other desktop-specific dependencies if needed (e.g., gdx-controllers-desktop)
     // api "com.badlogicgames.gdx:gdx-box2d-platform:$gdxVersion:natives-desktop" // If using Box2D natives
   }

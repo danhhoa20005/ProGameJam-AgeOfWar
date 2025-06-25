@@ -23,6 +23,18 @@ public class Unit extends Entity {
     private boolean moving;
     private boolean facingRight = true;
 
+    // Timer để quản lý thời gian hiển thị animation tấn công
+    private float attackAnimationTimer = 0f;
+    private static final float ATTACK_ANIMATION_DURATION = 0.6f; // 600ms để hiển thị animation tấn công
+
+    // Timer để quản lý thời gian hiển thị animation hurt và death
+    private float hurtAnimationTimer = 0f;
+    private static final float HURT_ANIMATION_DURATION = 0.4f; // 400ms để hiển thị animation hurt
+
+    private float deathAnimationTimer = 0f;
+    private static final float DEATH_ANIMATION_DURATION = 1.0f; // 1000ms để hiển thị animation death
+    private boolean deathAnimationCompleted = false;
+
     private PlayerType playerType;
     private UnitAsset asset;
 
@@ -109,6 +121,43 @@ public class Unit extends Entity {
     @Override
     public void update(float delta) {
         super.update(delta);
+
+        // Cập nhật timer animation death (ưu tiên cao nhất)
+        if (deathAnimationTimer > 0) {
+            deathAnimationTimer -= delta;
+            if (deathAnimationTimer <= 0) {
+                deathAnimationCompleted = true;
+                // Giữ nguyên trạng thái DEATH sau khi animation hoàn thành
+            }
+            return; // Không xử lý các timer khác khi đang trong animation death
+        }
+
+        // Cập nhật timer animation hurt
+        if (hurtAnimationTimer > 0) {
+            hurtAnimationTimer -= delta;
+            if (hurtAnimationTimer <= 0) {
+                // Animation hurt đã hoàn thành, chuyển về trạng thái phù hợp
+                if (moving) {
+                    currentState = UnitState.WALK;
+                } else {
+                    currentState = UnitState.IDLE;
+                }
+            }
+            return; // Không xử lý attack timer khi đang trong animation hurt
+        }
+
+        // Cập nhật timer animation tấn công
+        if (attackAnimationTimer > 0) {
+            attackAnimationTimer -= delta;
+            if (attackAnimationTimer <= 0) {
+                // Animation tấn công đã hoàn thành, chuyển về trạng thái phù hợp
+                if (moving) {
+                    currentState = UnitState.WALK;
+                } else {
+                    currentState = UnitState.IDLE;
+                }
+            }
+        }
     }
 
     public void move(float deltaX) {
@@ -130,6 +179,10 @@ public class Unit extends Entity {
         moveSpeed = 0;
         moving = false;
         facingRight = true;
+        attackAnimationTimer = 0f; // Reset attack animation timer
+        hurtAnimationTimer = 0f; // Reset hurt animation timer
+        deathAnimationTimer = 0f; // Reset death animation timer
+        deathAnimationCompleted = false; // Reset death animation state
     }
 
 
@@ -149,4 +202,68 @@ public class Unit extends Entity {
 
     public void setMoving(boolean moving) { this.moving = moving; }
     public void setCurrentState(UnitState currentState) { this.currentState = currentState; }
+
+    /**
+     * Bắt đầu animation tấn công với thời gian hiển thị cố định.
+     */
+    public void startAttackAnimation() {
+        currentState = UnitState.ATTACK;
+        attackAnimationTimer = ATTACK_ANIMATION_DURATION;
+    }
+
+    /**
+     * Kiểm tra xem unit có đang trong animation tấn công không.
+     */
+    public boolean isInAttackAnimation() {
+        return attackAnimationTimer > 0;
+    }
+
+    /**
+     * Kiểm tra xem unit có đang trong animation hurt không.
+     */
+    public boolean isInHurtAnimation() {
+        return hurtAnimationTimer > 0;
+    }
+
+    /**
+     * Kiểm tra xem unit có đang trong animation death không.
+     */
+    public boolean isInDeathAnimation() {
+        return deathAnimationTimer > 0;
+    }
+
+    /**
+     * Kiểm tra xem animation death đã hoàn thành chưa.
+     */
+    public boolean isDeathAnimationCompleted() {
+        return deathAnimationCompleted;
+    }
+
+    @Override
+    public void takeDamage(int amount) {
+        if (!alive) return; // Không nhận sát thương nếu đã chết
+        if (deathAnimationCompleted) return; // Không nhận sát thương nếu animation death đã hoàn thành
+
+        this.health -= amount;
+
+        if (this.health <= 0) {
+            this.health = 0;
+            this.alive = false;
+            // Kích hoạt animation death
+            currentState = UnitState.DEATH;
+            deathAnimationTimer = DEATH_ANIMATION_DURATION;
+            deathAnimationCompleted = false;
+            // Reset các timer khác
+            attackAnimationTimer = 0f;
+            hurtAnimationTimer = 0f;
+        } else {
+            // Nếu không chết, kích hoạt animation hurt (nếu không đang trong animation death)
+            if (currentState != UnitState.DEATH && deathAnimationTimer <= 0) {
+                currentState = UnitState.HURT;
+                hurtAnimationTimer = HURT_ANIMATION_DURATION;
+                // Reset attack animation timer khi bị hurt
+                attackAnimationTimer = 0f;
+            }
+        }
+    }
 }

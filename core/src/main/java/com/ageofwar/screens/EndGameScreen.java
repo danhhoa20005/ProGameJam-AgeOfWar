@@ -68,12 +68,13 @@ public class EndGameScreen extends ScreenAdapter {
         Label resultLabel = new Label(resultMessage, skin); // Use a larger font style
         resultLabel.setColor(winner == PlayerType.PLAYER ? Color.GREEN : Color.RED);
 
-        Texture btnTex = game.assets.buttonTex;
-        TextureRegion btnRegion = new TextureRegion(btnTex);
-        TextureRegionDrawable upDrawable = new TextureRegionDrawable(btnRegion);
-        TextureRegionDrawable downDrawable = new TextureRegionDrawable(btnRegion);
-        // You can tint downDrawable if you want a pressed effect:
-        // downDrawable.tint(Color.DARK_GRAY);
+        Texture upBtnTex = this.game.assets.upButtonTex;
+        Texture downBtnTex = this.game.assets.downButtonTex;
+        TextureRegion upBtnRegion = new TextureRegion(upBtnTex);
+        TextureRegion downBtnRegion = new TextureRegion(downBtnTex);
+        TextureRegionDrawable upDrawable = new TextureRegionDrawable(upBtnRegion);
+        TextureRegionDrawable downDrawable = new TextureRegionDrawable(downBtnRegion);
+        downDrawable.tint(Color.DARK_GRAY);
         TextButton.TextButtonStyle customBtnStyle = new TextButton.TextButtonStyle(
             upDrawable,    // up
             downDrawable,  // down

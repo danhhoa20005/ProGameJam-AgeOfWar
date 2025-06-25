@@ -1,6 +1,7 @@
 package com.ageofwar.views.renderers;
 
 import com.ageofwar.models.units.Unit;
+import com.ageofwar.models.units.UnitState;
 import com.ageofwar.models.World;
 import com.badlogic.gdx.graphics.Color;
 import com.badlogic.gdx.graphics.g2d.Animation;
@@ -54,10 +55,13 @@ public class UnitRenderer extends BaseRenderer {
 
     private void drawUnits(Array<Unit> units) {
         for (Unit unit : units) {
-            if (!unit.isAlive()) continue;
+            if (!unit.isAlive() && unit.isDeathAnimationCompleted()) continue; // Không vẽ unit đã chết và hoàn thành animation death
             Rectangle b = unit.getBounds();
             Animation<TextureRegion> anim = unit.getCurrentAnimation();
-            TextureRegion frame = anim.getKeyFrame(stateTime, true);
+
+            // Death animation không lặp lại, các animation khác lặp lại
+            boolean looping = unit.getCurrentState() != UnitState.DEATH;
+            TextureRegion frame = anim.getKeyFrame(stateTime, looping);
 
             // Draw without flipping; animation frames already represent orientation
             batch.draw(frame, b.x, b.y, b.width, b.height);
@@ -66,7 +70,8 @@ public class UnitRenderer extends BaseRenderer {
 
     private void drawUnitHealthBars(Array<Unit> units) {
         for (Unit unit : units) {
-            if (!unit.isAlive()) continue;
+            // Không vẽ thanh máu nếu unit đã chết hoặc đang trong trạng thái Death
+            if (!unit.isAlive() || unit.getCurrentState() == UnitState.DEATH) continue;
             Rectangle b = unit.getBounds();
             drawHealthBar(
                 b.x,

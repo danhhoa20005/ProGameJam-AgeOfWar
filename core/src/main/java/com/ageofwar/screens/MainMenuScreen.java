@@ -3,75 +3,123 @@ package com.ageofwar.screens;
 import com.ageofwar.AgeOfWarGame;
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.ScreenAdapter;
+import com.badlogic.gdx.graphics.Color;
 import com.badlogic.gdx.graphics.GL20;
 import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.graphics.g2d.TextureRegion;
+import com.badlogic.gdx.math.Interpolation;
 import com.badlogic.gdx.scenes.scene2d.Actor;
+import com.badlogic.gdx.scenes.scene2d.InputEvent;
+import com.badlogic.gdx.scenes.scene2d.InputListener;
 import com.badlogic.gdx.scenes.scene2d.Stage;
+import com.badlogic.gdx.scenes.scene2d.actions.Actions;
+import com.badlogic.gdx.scenes.scene2d.ui.Image;
 import com.badlogic.gdx.scenes.scene2d.ui.Label;
+import com.badlogic.gdx.scenes.scene2d.ui.Label.LabelStyle;
 import com.badlogic.gdx.scenes.scene2d.ui.Skin;
 import com.badlogic.gdx.scenes.scene2d.ui.Table;
 import com.badlogic.gdx.scenes.scene2d.ui.TextButton;
 import com.badlogic.gdx.scenes.scene2d.utils.ChangeListener;
 import com.badlogic.gdx.scenes.scene2d.utils.TextureRegionDrawable;
 import com.badlogic.gdx.utils.viewport.ScreenViewport;
+import com.badlogic.gdx.graphics.g2d.BitmapFont;
+import com.badlogic.gdx.graphics.g2d.freetype.FreeTypeFontGenerator;
 
 public class MainMenuScreen extends ScreenAdapter {
-
     private final AgeOfWarGame game;
     private Stage stage;
-    private Skin skin; // Skin for UI elements
+    private Skin skin;
+    private Texture bgTexture; // background texture
+    private float animationTime = 0f; // For animations
 
-    public MainMenuScreen(final AgeOfWarGame game) {
+    public MainMenuScreen(AgeOfWarGame game) {
         this.game = game;
-        stage = new Stage(new ScreenViewport());
-        Gdx.input.setInputProcessor(stage);
+        this.stage = new Stage(new ScreenViewport());
 
-        // Ensure UI skin is loaded and assets assigned
+        // Add background image with tint effect
+        bgTexture = new Texture(Gdx.files.internal("Background/Background.png"));
+        Image bgImage = new Image(new TextureRegion(bgTexture));
+        bgImage.setFillParent(true);
+        // Add a slight dark tint to make text more readable
+        bgImage.setColor(0.8f, 0.8f, 0.9f, 1f);
+        stage.addActor(bgImage);
+        Gdx.input.setCatchBackKey(true);
+
+        // --- setup UI skin ---
         try {
-            if (!game.assets.manager.isLoaded(com.ageofwar.utils.Assets.UI_SKIN)) {
-                game.assets.manager.finishLoadingAsset(com.ageofwar.utils.Assets.UI_SKIN);
+            if (this.game.assets.uiSkin == null) {
+                this.game.assets.assignAssets();
             }
-            if (game.assets.uiSkin == null) {
-                game.assets.assignAssets();
-            }
-            skin = game.assets.uiSkin;
+            skin = this.game.assets.uiSkin;
         } catch (Exception e) {
             Gdx.app.error("MainMenuScreen", "Failed to load UI skin. Using default.", e);
             skin = new Skin(Gdx.files.internal("ui/uiskin.json"));
         }
 
-        // --- create a TextButtonStyle using the custom BUTTON_TEXTURE ---
-        Texture btnTex = game.assets.buttonTex;
-        TextureRegion btnRegion = new TextureRegion(btnTex);
-        TextureRegionDrawable upDrawable = new TextureRegionDrawable(btnRegion);
-        TextureRegionDrawable downDrawable = new TextureRegionDrawable(btnRegion);
-        // You can tint downDrawable if you want a pressed effect:
-        // downDrawable.tint(Color.DARK_GRAY);
+        // Override default font with Unicode-capable fonts for Vietnamese
+        try {
+            FreeTypeFontGenerator generator = new FreeTypeFontGenerator(Gdx.files.internal("fonts/Roboto-Regular.ttf"));
+
+            // Title font (larger with shadow effect)
+            FreeTypeFontGenerator.FreeTypeFontParameter titleParam = new FreeTypeFontGenerator.FreeTypeFontParameter();
+            titleParam.size = 32; // Increased size
+            titleParam.shadowOffsetX = 2;
+            titleParam.shadowOffsetY = 2;
+            titleParam.shadowColor = Color.BLACK;
+            titleParam.borderWidth = 1;
+            titleParam.borderColor = Color.DARK_GRAY;
+            titleParam.characters = FreeTypeFontGenerator.DEFAULT_CHARS + "âăđêếôơưÂĂĐÊÔƠƯáàảãạấầẩẫậắằẳẵặÁÀẢÃẠẤẦẨẪẬẮẰẲẴẶéèẻẽẹÉÈẺẼẸíìỉĩịÍÌỈĨỊóòỏõọÓÒỎÕỌốồổỗộỐỒỔỖỘớờởỡợỚỜỞỠỢúùủũụÚÙỤŨỤýỳỷỹỵÝỲỶỸỴ";
+            BitmapFont titleFont = generator.generateFont(titleParam);
+            skin.add("title-font", titleFont, BitmapFont.class);
+
+            // Button font (with subtle border)
+            FreeTypeFontGenerator.FreeTypeFontParameter btnParam = new FreeTypeFontGenerator.FreeTypeFontParameter();
+            btnParam.size = 20; // Slightly larger
+            btnParam.borderWidth = 0.5f;
+            btnParam.borderColor = Color.DARK_GRAY;
+            btnParam.characters = titleParam.characters;
+            BitmapFont btnFont = generator.generateFont(btnParam);
+            skin.add("btn-font", btnFont, BitmapFont.class);
+
+            generator.dispose();
+        } catch (Exception e) {
+            Gdx.app.error("MainMenuScreen", "Vietnamese fonts not found, using default fonts.", e);
+        }
+
+        // --- create a TextButtonStyle using the custom UP_BUTTON_TEXTURE ---
+        Texture upBtnTex = this.game.assets.upButtonTex;
+        Texture downBtnTex = this.game.assets.downButtonTex;
+        TextureRegion upBtnRegion = new TextureRegion(upBtnTex);
+        TextureRegion downBtnRegion = new TextureRegion(downBtnTex);
+        TextureRegionDrawable upDrawable = new TextureRegionDrawable(upBtnRegion);
+        TextureRegionDrawable downDrawable = new TextureRegionDrawable(downBtnRegion);
+        downDrawable.tint(Color.DARK_GRAY);
         TextButton.TextButtonStyle customBtnStyle = new TextButton.TextButtonStyle(
             upDrawable,    // up
             downDrawable,  // down
             null,          // checked
-            skin.getFont("default-font")
+            skin.getFont("btn-font")
         );
 
         Table table = new Table();
         table.setFillParent(true);
         table.center();
 
-        Label titleLabel = new Label("Cuoc Chien Xuyen The Ky", skin);
+        // Use custom label style with Unicode font
+        LabelStyle titleStyle = new LabelStyle(skin.getFont("title-font"), Color.WHITE);
+        Label titleLabel = new Label("Cuộc Chiến Xuyên Thế Kỷ", titleStyle);
 
         // use the customBtnStyle for all menu buttons
-        TextButton startButton    = new TextButton("Bat Dau",    customBtnStyle);
-        TextButton settingsButton = new TextButton("Cai Dat (Chua co)", customBtnStyle);
-        TextButton quitButton     = new TextButton("Thoat",      customBtnStyle);
+        TextButton startButton    = new TextButton("Bắt Đầu",    customBtnStyle);
+        TextButton settingsButton = new TextButton("Cài Đặt (Chưa có)", customBtnStyle);
+        TextButton quitButton     = new TextButton("Thoát",      customBtnStyle);
 
         startButton.addListener(new ChangeListener() {
             @Override
             public void changed(ChangeEvent event, Actor actor) {
                 Gdx.app.log("MainMenuScreen", "Start button clicked.");
                 try {
-                    game.setScreen(new GameScreen(game));
+                    MainMenuScreen.this.game.setScreen(new GameScreen(MainMenuScreen.this.game));
                     dispose();
                 } catch (Exception e) {
                     Gdx.app.error("MainMenuScreen", "Error switching to GameScreen", e);
@@ -126,5 +174,6 @@ public class MainMenuScreen extends ScreenAdapter {
     public void dispose() {
         Gdx.app.log("MainMenuScreen", "Disposing screen.");
         stage.dispose();
+        if (bgTexture != null) bgTexture.dispose();
     }
 }

@@ -1,6 +1,5 @@
 package com.ageofwar.systems; // Đặt vào package systems mới
 
-import com.ageofwar.configs.GameConfig;
 import com.ageofwar.configs.TowerConfig;
 import com.ageofwar.configs.UnitConfig;
 import com.ageofwar.models.Entity;
@@ -11,7 +10,6 @@ import com.ageofwar.models.units.Unit;
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.math.Vector2;
 import com.badlogic.gdx.utils.Array;
-import com.badlogic.gdx.utils.Pool;
 
 /**
  * Hệ thống CombatSystem quản lý logic chiến đấu trong trò chơi.
@@ -31,18 +29,19 @@ public class CombatSystem {
         Entity closestTarget = null;
         float minDistanceSq = Float.MAX_VALUE;
 
-        // Tầm phát hiện lớn hơn tầm đánh một chút để bắt đầu di chuyển sớm
-        float detectionRangeSq = attacker.getRange() * attacker.getRange() * 4;
+        // Tầm phát hiện được giảm từ 4x tầm đánh xuống còn tầm đánh + 50 pixels để tránh việc phát hiện quá sớm
+        float detectionRange = attacker.getRange() + 50f; // Giảm từ 4x xuống còn +50 pixels
+        float detectionRangeSq = detectionRange * detectionRange;
         // Tầm phát hiện tối thiểu cho lính cận chiến
-        if (attacker.getRange() < 70) detectionRangeSq = 70*70;
+        if (attacker.getRange() < 70) detectionRangeSq = 120*120;
 
 
         // 1. Kiểm tra Unit đối phương
         for (Unit enemy : enemyUnits) {
             if (!enemy.isAlive()) continue;
             float distSq = Vector2.dst2(attacker.getX(), attacker.getY(), enemy.getX(), enemy.getY());
-            // Ưu tiên mục tiêu gần nhất trong tầm phát hiện
-            if (distSq < minDistanceSq && distSq <= detectionRangeSq) {
+            // Ưu tiên mục tiêu gần nhất trong tầm phát hiện và có thể nhìn thấy được
+            if (distSq < minDistanceSq && distSq <= detectionRangeSq && hasLineOfSight(attacker, enemy, enemyUnits, enemyTowers)) {
                 minDistanceSq = distSq;
                 closestTarget = enemy;
             }
@@ -52,8 +51,8 @@ public class CombatSystem {
         for (Tower enemyTower : enemyTowers) {
             if (!enemyTower.isAlive()) continue;
             float distSq = Vector2.dst2(attacker.getX(), attacker.getY(), enemyTower.getX(), enemyTower.getY());
-            // Chỉ chọn Tower nếu nó gần hơn Unit đã tìm thấy (hoặc chưa tìm thấy Unit) và trong tầm phát hiện
-            if (distSq < minDistanceSq && distSq <= detectionRangeSq) {
+            // Chỉ chọn Tower nếu nó gần hơn Unit đã tìm thấy (hoặc chưa tìm thấy Unit) và trong tầm phát hiện và có thể nhìn thấy được
+            if (distSq < minDistanceSq && distSq <= detectionRangeSq && hasLineOfSight(attacker, enemyTower, enemyUnits, enemyTowers)) {
                 minDistanceSq = distSq;
                 closestTarget = enemyTower;
             }
@@ -98,6 +97,12 @@ public class CombatSystem {
         if (target != null && target.isAlive()) {
             target.takeDamage(attacker.getDamage()); // Gây sát thương
             attacker.resetAttackCooldown(); // Đặt lại thời gian hồi chiêu sau khi tấn công
+
+            // Bắt đầu animation tấn công cho Unit
+            if (attacker instanceof Unit) {
+                ((Unit) attacker).startAttackAnimation();
+            }
+
             // Gdx.app.debug("CombatSystem", attacker.getClass().getSimpleName() + " tấn công " + target.getClass().getSimpleName() + " gây " + attacker.getDamage() + " sát thương.");
 
             if (!target.isAlive()) { // Nếu mục tiêu chết sau đòn đánh
@@ -127,6 +132,36 @@ public class CombatSystem {
     public void attackBase(Unit attacker, Player enemyPlayer) {
         enemyPlayer.takeDamage(attacker.getDamage()); // Gây sát thương cho căn cứ
         attacker.resetAttackCooldown(); // Đặt lại hồi chiêu
+        attacker.startAttackAnimation(); // Bắt đầu animation tấn công
         Gdx.app.debug("CombatSystem", attacker.getOwnerType() + " " + attacker.getType() + " tấn công căn cứ " + enemyPlayer.getType() + " gây " + attacker.getDamage() + " sát thương.");
+    }
+
+    /**
+     * Kiểm tra xem attacker có thể nhìn thấy target không (không bị cản bởi đồng đội).
+     * @param attacker Unit đang tìm mục tiêu.
+     * @param target Mục tiêu cần kiểm tra.
+     * @param enemyUnits Units của địch để kiểm tra va chạm.
+     * @param enemyTowers Towers của địch để kiểm tra va chạm.
+     * @return true nếu có thể nhìn thấy target, false nếu bị cản.
+     */
+    private boolean hasLineOfSight(Unit attacker, Entity target, Array<Unit> enemyUnits, Array<Tower> enemyTowers) {
+        // Chỉ kiểm tra line of sight cho unit cận chiến (tầm đánh nhỏ)
+        if (attacker.getRange() > 100) return true; // Unit tầm xa không cần kiểm tra line of sight
+
+        float attackerX = attacker.getX();
+        float targetX = target.getX();
+
+        // Nếu attacker đang ở phía sau target (theo hướng tiến quân), không được tấn công
+        if (attacker.getOwnerType() == PlayerType.PLAYER) {
+            // Player units di chuyển từ trái sang phải
+            if (attackerX < targetX - 30) return false; // Cần ở gần hoặc phía trước target
+        } else {
+            // AI units di chuyển từ phải sang trái
+            if (attackerX > targetX + 30) return false; // Cần ở gần hoặc phía trước target
+        }
+
+        // NOTE: Tạm thời bỏ qua việc kiểm tra đồng đội cản đường vì cần thêm tham số
+        // Có thể thêm logic này sau nếu cần
+        return true; // Không bị cản, có thể tấn công
     }
 }

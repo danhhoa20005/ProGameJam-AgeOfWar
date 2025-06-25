@@ -13,9 +13,9 @@ public class Assets {
     public final AssetManager manager = new AssetManager();
 
     // --- ĐỊNH NGHĨA ĐƯỜNG DẪN ---
-    public static final String PLACEHOLDER_TEXTURE = "images/placeholder.png";
     public static final String UI_SKIN = "ui/uiskin.json";
-    public static final String BUTTON_TEXTURE = "Buttons/Button_Blue_3Slides_Pressed.png"; // Thêm đường dẫn đến nút bấm
+    public static final String UP_BUTTON_TEXTURE = "Buttons/Button_Blue_3Slides.png";
+    public static final String DOWN_BUTTON_TEXTURE = "Buttons/Button_Blue_3Slides_Pressed.png";
 
     // Đường dẫn đến các file map theo kỷ nguyên (viết thường)
     public static final String MAP_FOLDER = "MAP/"; // Thư mục chứa map
@@ -25,17 +25,16 @@ public class Assets {
     public static final String MAP_FUTURE = MAP_FOLDER + "map_future.tmx";
 
     // --- BIẾN THAM CHIẾU TÀI NGUYÊN ---
-    public Texture placeholderTex;
-    public Texture buttonTex; // Biến tham chiếu Texture cho nút bấm
+    public Texture upButtonTex;
+    public Texture downButtonTex;
     public Skin uiSkin;
     // Sử dụng ObjectMap để lưu trữ các map theo Era
     public ObjectMap<Era, TiledMap> eraMaps;
 
     public void load() {
-        // Load textures, skin
-        manager.load(PLACEHOLDER_TEXTURE, Texture.class);
         manager.load(UI_SKIN, Skin.class);
-        manager.load(BUTTON_TEXTURE, Texture.class); // Load Texture cho nút bấm
+        manager.load(UP_BUTTON_TEXTURE, Texture.class);
+        manager.load(DOWN_BUTTON_TEXTURE, Texture.class);
 
         // *** TẢI TẤT CẢ BẢN ĐỒ ***
         manager.setLoader(TiledMap.class, new TmxMapLoader(manager.getFileHandleResolver()));
@@ -53,9 +52,9 @@ public class Assets {
      */
     public void assignAssets() {
         Gdx.app.log("Assets", "Bắt đầu gán tài nguyên...");
-        placeholderTex = manager.get(PLACEHOLDER_TEXTURE, Texture.class);
         uiSkin = manager.get(UI_SKIN, Skin.class);
-        buttonTex = manager.get(BUTTON_TEXTURE, Texture.class); // Gán Texture cho nút bấm
+        upButtonTex = manager.get(UP_BUTTON_TEXTURE, Texture.class); // Gán Texture cho nút bấm
+        downButtonTex = manager.get(DOWN_BUTTON_TEXTURE, Texture.class); // Gán Texture cho nút bấm
 
         // *** GÁN CÁC BẢN ĐỒ VÀO MAP ***
         eraMaps = new ObjectMap<>(); // Khởi tạo ObjectMap

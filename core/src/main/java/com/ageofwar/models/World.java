@@ -13,7 +13,6 @@ import com.ageofwar.models.units.Unit;
 import com.ageofwar.models.units.UnitState;
 import com.ageofwar.systems.CombatSystem; // Import hệ thống mới
 // import com.ageofwar.systems.SpecialAbilitySystem; // Không cần trực tiếp ở đây nữa
-import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.math.MathUtils;
 // import com.badlogic.gdx.math.Rectangle; // Không cần tempRect nữa nếu không dùng ở đây
 import com.badlogic.gdx.math.Vector2;
@@ -110,6 +109,9 @@ public class World implements Disposable {
 
             unit.update(delta); // cooldown nội bộ
 
+            // Nếu đang trong animation death hoặc hurt, không thực hiện logic di chuyển/tấn công
+            if (unit.isInDeathAnimation() || unit.isInHurtAnimation()) continue;
+
             // Tìm mục tiêu (Unit hoặc Tower) qua CombatSystem
             Entity target = combatSystem.findTargetForUnit(unit, enemyUnits, enemyTowers);
             unit.setTarget(target);
@@ -119,30 +121,41 @@ public class World implements Disposable {
                 if (dist <= unit.getRange()) {
                     unit.setMoving(false);
                     if (unit.canAttack()) {
-                        unit.setCurrentState(UnitState.ATTACK);
                         combatSystem.resolveAttack(unit, target, owner);
+                    } else if (!unit.isInAttackAnimation()) {
+                        // Nếu chưa thể tấn công (đang hồi chiêu) và không đang trong animation tấn công
+                        unit.setCurrentState(UnitState.IDLE);
                     }
-                } else {
+                    // Nếu đang trong animation tấn công, không thay đổi trạng thái
+                } else if (!unit.isInAttackAnimation()) {
+                    // Chỉ di chuyển nếu không đang trong animation tấn công
                     unit.setMoving(true);
+                    unit.setCurrentState(UnitState.WALK);
                     float dir = (target.getX() > unit.getX()) ? 1f : -1f;
                     unit.move(dir * unit.getMoveSpeed() * delta);
                 }
             } else {
                 // Tấn công base nếu không có target sinh ra
-                unit.setMoving(true);
-                float baseX = (unit.getOwnerType() == PlayerType.PLAYER)
-                    ? GameConfig.AI_BASE_X
-                    : GameConfig.PLAYER_BASE_X;
-                float dist = Math.abs(unit.getX() - baseX);
-                if (dist <= unit.getRange()) {
-                    unit.setMoving(false);
-                    if (unit.canAttack()) {
-                        unit.setCurrentState(UnitState.ATTACK);
-                        combatSystem.attackBase(unit, enemyPlayer);
+                if (!unit.isInAttackAnimation()) {
+                    // Chỉ di chuyển nếu không đang trong animation tấn công
+                    unit.setMoving(true);
+                    unit.setCurrentState(UnitState.WALK);
+                    float baseX = (unit.getOwnerType() == PlayerType.PLAYER)
+                        ? GameConfig.AI_BASE_X
+                        : GameConfig.PLAYER_BASE_X;
+                    float dist = Math.abs(unit.getX() - baseX);
+                    if (dist <= unit.getRange()) {
+                        unit.setMoving(false);
+                        if (unit.canAttack()) {
+                            combatSystem.attackBase(unit, enemyPlayer);
+                        } else if (!unit.isInAttackAnimation()) {
+                            // Nếu chưa thể tấn công (đang hồi chiêu) và không đang trong animation tấn công
+                            unit.setCurrentState(UnitState.IDLE);
+                        }
+                    } else {
+                        float dir = (baseX > unit.getX()) ? 1f : -1f;
+                        unit.move(dir * unit.getMoveSpeed() * delta);
                     }
-                } else {
-                    float dir = (baseX > unit.getX()) ? 1f : -1f;
-                    unit.move(dir * unit.getMoveSpeed() * delta);
                 }
             }
 
@@ -180,7 +193,8 @@ public class World implements Disposable {
     private void cleanupEntities(Array<Unit> units, Pool<Unit> pool) {
         for (int i = units.size - 1; i >= 0; i--) {
             Unit u = units.get(i);
-            if (!u.isAlive()) {
+            // Chỉ xóa unit khi đã chết và animation death đã hoàn thành
+            if (!u.isAlive() && u.isDeathAnimationCompleted()) {
                 units.removeIndex(i);
                 pool.free(u);
             }

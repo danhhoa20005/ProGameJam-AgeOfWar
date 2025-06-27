@@ -71,10 +71,11 @@ public class UnitAsset {
 
     public int getAnimationRow(PlayerType playerType, UnitType unitType, UnitState state) {
         // Trả về hàng animation dựa trên PlayerType
+        // Player units use row 3 (0-indexed), Enemy units use row 2 (0-indexed)
         if (playerType == PlayerType.PLAYER) {
-            return 4;
+            return 3; // Row 4 in 1-based indexing
         } else {
-            return 3;
+            return 2; // Row 3 in 1-based indexing
         }
     }
 }

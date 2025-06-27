@@ -15,8 +15,10 @@ import com.ageofwar.models.towers.TowerType;
 import com.ageofwar.models.units.Unit;
 import com.ageofwar.models.units.UnitType;
 import com.ageofwar.systems.SpecialAbilitySystem;
+import com.ageofwar.systems.FormationSystem;
 import com.badlogic.gdx.Gdx;
 // import com.badlogic.gdx.math.MathUtils; // Không cần MathUtils ở đây nữa
+import com.badlogic.gdx.math.Vector2;
 import com.badlogic.gdx.utils.Disposable;
 import com.badlogic.gdx.utils.Pool;
 import com.badlogic.gdx.utils.Pools;
@@ -137,6 +139,11 @@ public class GameModel implements Disposable {
         if (owner.getGold() >= cost && owner.getCurrentEra().ordinal() >= requiredEra.ordinal()) {
             owner.addGold(-cost); // Trừ chi phí
 
+            // Tính toán vị trí spawn tối ưu sử dụng FormationSystem
+            com.badlogic.gdx.utils.Array<Unit> existingUnits = (ownerType == PlayerType.PLAYER) ?
+                world.getPlayerUnits() : world.getAiUnits();
+            Vector2 spawnPosition = FormationSystem.calculateSpawnPosition(ownerType, existingUnits);
+
             Unit unit = unitPool.obtain(); // Lấy unit từ pool
             unit.init(
                 unitType,
@@ -146,11 +153,11 @@ public class GameModel implements Disposable {
                 UnitConfig.getUnitAttackSpeed(unitType),
                 UnitConfig.getUnitRange(unitType),
                 UnitConfig.getUnitMoveSpeed(unitType),
-                (ownerType == PlayerType.PLAYER) ? GameConfig.PLAYER_SPAWN_X : GameConfig.AI_SPAWN_X,
-                GameConfig.GROUND_Y
+                spawnPosition.x,
+                spawnPosition.y
             );
             world.addUnit(unit); // Thêm unit vào thế giới
-            System.out.println(ownerType + " đã sinh " + unitType); // Gỡ lỗi: Sinh lính
+            System.out.println(ownerType + " đã sinh " + unitType + " tại vị trí (" + spawnPosition.x + ", " + spawnPosition.y + ")");
             return true;
         } else {
             if (owner.getGold() < cost) Gdx.app.debug("GameModel", ownerType + " không thể sinh " + unitType + ": không đủ vàng.");

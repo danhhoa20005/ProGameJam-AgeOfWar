@@ -93,26 +93,37 @@ public class Unit extends Entity {
         walkSheet   = new Texture(asset.getAssetLink(unitType, UnitState.WALK));
 
         float frameDuration = 0.1f;
+        // Both Left and Right animations now use the same row based on playerType
+        // This ensures units always display the correct facing for their side
         attackAnimationRight = createAnimation(attackSheet, frameDuration, UnitState.ATTACK, true);
-        attackAnimationLeft  = createAnimation(attackSheet, frameDuration, UnitState.ATTACK, false);
+        attackAnimationLeft  = createAnimation(attackSheet, frameDuration, UnitState.ATTACK, true); // Same row as Right
         deathAnimationRight  = createAnimation(deathSheet,  frameDuration, UnitState.DEATH, true);
-        deathAnimationLeft   = createAnimation(deathSheet,  frameDuration, UnitState.DEATH, false);
+        deathAnimationLeft   = createAnimation(deathSheet,  frameDuration, UnitState.DEATH, true);  // Same row as Right
         hurtAnimationRight   = createAnimation(hurtSheet,   frameDuration, UnitState.HURT, true);
-        hurtAnimationLeft    = createAnimation(hurtSheet,   frameDuration, UnitState.HURT, false);
+        hurtAnimationLeft    = createAnimation(hurtSheet,   frameDuration, UnitState.HURT, true);   // Same row as Right
         idleAnimationRight   = createAnimation(idleSheet,   frameDuration, UnitState.IDLE, true);
-        idleAnimationLeft    = createAnimation(idleSheet,   frameDuration, UnitState.IDLE, false);
+        idleAnimationLeft    = createAnimation(idleSheet,   frameDuration, UnitState.IDLE, true);   // Same row as Right
         walkAnimationRight   = createAnimation(walkSheet,   frameDuration, UnitState.WALK, true);
-        walkAnimationLeft    = createAnimation(walkSheet,   frameDuration, UnitState.WALK, false);
+        walkAnimationLeft    = createAnimation(walkSheet,   frameDuration, UnitState.WALK, true);   // Same row as Right
+        hurtAnimationLeft    = createAnimation(hurtSheet,   frameDuration, UnitState.HURT, true);   // Same row as Right
+        idleAnimationRight   = createAnimation(idleSheet,   frameDuration, UnitState.IDLE, true);
+        idleAnimationLeft    = createAnimation(idleSheet,   frameDuration, UnitState.IDLE, true);   // Same row as Right
+        walkAnimationRight   = createAnimation(walkSheet,   frameDuration, UnitState.WALK, true);
+        walkAnimationLeft    = createAnimation(walkSheet,   frameDuration, UnitState.WALK, true);   // Same row as Right
 
         Gdx.app.debug("Unit Init", owner + " " + unitType + " initialized. Speed: " + spd);
     }
 
     private Animation<TextureRegion> createAnimation(Texture sheet, float delta, UnitState state, boolean facingRight) {
-        // Build a unique cache key per unit type, state, owner and facing
-        String cacheKey = unitType.name() + "_" + state.name() + "_" + playerType.name() + "_" + (facingRight ? "R" : "L");
+        // Build a unique cache key per unit type, state, and owner
+        // facingRight parameter is now ignored since we always use the same row for each playerType
+        String cacheKey = unitType.name() + "_" + state.name() + "_" + playerType.name();
         if (!regionCache.containsKey(cacheKey)) {
             TextureRegion[][] tmp = TextureRegion.split(sheet, 64, 64);
-            TextureRegion[] regions = tmp[facingRight ? 3 : 2];
+            // Use the correct row based on playerType, not facingRight
+            // Player units use row 3 (index 3), Enemy units use row 2 (index 2)
+            int row = asset.getAnimationRow(playerType, unitType, state);
+            TextureRegion[] regions = tmp[row];
             regionCache.put(cacheKey, regions);
         }
         return new Animation<>(delta, regionCache.get(cacheKey));

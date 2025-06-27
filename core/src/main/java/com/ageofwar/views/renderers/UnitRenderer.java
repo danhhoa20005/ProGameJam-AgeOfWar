@@ -3,7 +3,7 @@ package com.ageofwar.views.renderers;
 import com.ageofwar.models.units.Unit;
 import com.ageofwar.models.units.UnitState;
 import com.ageofwar.models.World;
-import com.badlogic.gdx.graphics.Color;
+import com.ageofwar.systems.VisualEnhancementSystem;
 import com.badlogic.gdx.graphics.g2d.Animation;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.graphics.g2d.TextureRegion;
@@ -21,18 +21,12 @@ import com.badlogic.gdx.utils.Array;
  */
 public class UnitRenderer extends BaseRenderer {
 
-    private final Color playerColor = Color.BLUE;
-    private final Color aiColor     = Color.RED;
-
     private float stateTime = 0f;
-
-    private final ShapeRenderer shapeRenderer;
     private final SpriteBatch  batch;
 
     public UnitRenderer(ShapeRenderer shapeRenderer, SpriteBatch batch) {
         super(shapeRenderer, batch);
-        this.shapeRenderer = shapeRenderer;
-        this.batch         = batch;
+        this.batch = batch;
     }
 
     /**
@@ -49,8 +43,12 @@ public class UnitRenderer extends BaseRenderer {
         drawUnits(world.getAiUnits());
         batch.end();
 
-        drawUnitHealthBars(world.getPlayerUnits());
-        drawUnitHealthBars(world.getAiUnits());
+        // Sử dụng VisualEnhancementSystem để vẽ thanh máu với collision avoidance
+        Array<Unit> allUnits = new Array<>();
+        allUnits.addAll(world.getPlayerUnits());
+        allUnits.addAll(world.getAiUnits());
+
+        VisualEnhancementSystem.renderEnhancedHealthBars(super.shapeRenderer, allUnits);
     }
 
     private void drawUnits(Array<Unit> units) {
@@ -65,22 +63,6 @@ public class UnitRenderer extends BaseRenderer {
 
             // Draw without flipping; animation frames already represent orientation
             batch.draw(frame, b.x, b.y, b.width, b.height);
-        }
-    }
-
-    private void drawUnitHealthBars(Array<Unit> units) {
-        for (Unit unit : units) {
-            // Không vẽ thanh máu nếu unit đã chết hoặc đang trong trạng thái Death
-            if (!unit.isAlive() || unit.getCurrentState() == UnitState.DEATH) continue;
-            Rectangle b = unit.getBounds();
-            drawHealthBar(
-                b.x,
-                b.y + b.height + 5,
-                b.width,
-                5,
-                unit.getHealth(),
-                unit.getMaxHealth()
-            );
         }
     }
 }

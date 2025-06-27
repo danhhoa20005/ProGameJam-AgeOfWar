@@ -12,7 +12,8 @@ import com.ageofwar.models.towers.Tower;
 import com.ageofwar.models.units.Unit;
 import com.ageofwar.models.units.UnitState;
 import com.ageofwar.systems.CombatSystem; // Import hệ thống mới
-// import com.ageofwar.systems.SpecialAbilitySystem; // Không cần trực tiếp ở đây nữa
+import com.ageofwar.systems.CollisionSystem;
+import com.ageofwar.systems.FormationSystem;
 import com.badlogic.gdx.math.MathUtils;
 // import com.badlogic.gdx.math.Rectangle; // Không cần tempRect nữa nếu không dùng ở đây
 import com.badlogic.gdx.math.Vector2;
@@ -78,6 +79,12 @@ public class World implements Disposable {
                        Pool<Tower> tp) {
         // Đảm bảo pools đã được set
         if (unitPool == null) setPools(up, tp);
+
+        // 0. Cập nhật formation và collision để tránh units chồng lên nhau
+        FormationSystem.updateFormation(playerUnits, delta);
+        FormationSystem.updateFormation(aiUnits, delta);
+        CollisionSystem.resolveCollisions(playerUnits, delta);
+        CollisionSystem.resolveCollisions(aiUnits, delta);
 
         // 1. Player units & towers
         updateEntities(delta, playerUnits, aiUnits, aiTowers, aiPlayer, player);

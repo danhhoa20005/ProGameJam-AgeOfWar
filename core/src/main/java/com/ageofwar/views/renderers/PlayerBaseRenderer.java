@@ -31,13 +31,13 @@ public class PlayerBaseRenderer extends BaseRenderer {
         super(shapeRenderer, batch);
 
         // Tự động load hình ảnh căn cứ
-        this.playerBaseTextureFull = new Texture("Base/xanh/1.png");
-        this.playerBaseTexture66 = new Texture("Base/xanh/2.png");
-        this.playerBaseTexture33 = new Texture("Base/xanh/3.png");
+        this.playerBaseTextureFull = new Texture("Base/Blue/Base1/1.png");
+        this.playerBaseTexture66 = new Texture("Base/Blue/Base1/2.png");
+        this.playerBaseTexture33 = new Texture("Base/Blue/Base1/3.png");
 
-        this.aiBaseTextureFull = new Texture("Base/do/1.png");
-        this.aiBaseTexture66 = new Texture("Base/do/2.png");
-        this.aiBaseTexture33 = new Texture("Base/do/3.png");
+        this.aiBaseTextureFull = new Texture("Base/Red/Base1/1.png");
+        this.aiBaseTexture66 = new Texture("Base/Red/Base1/2.png");
+        this.aiBaseTexture33 = new Texture("Base/Red/Base1/3.png");
     }
 
     /**
